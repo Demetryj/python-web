@@ -6,7 +6,8 @@ from aiohttp import ClientSession, ClientTimeout
 
 from classes_ import PrivatBankClient, CurrencyService, CurrencyNotFoundError, HttpError
 
-
+BASE_URL = "https://api.privatbank.ua/p24api/exchange_rates?json&date="
+ 
 
 def parse_args(argv: list[str]) -> tuple[int, set[str]]:
     """Parse CLI arguments: days and optional extra currency codes."""
@@ -29,7 +30,7 @@ async def main() -> None:
     timeout = ClientTimeout(total=10)
 
     async with ClientSession(timeout=timeout) as session:
-        client = PrivatBankClient(session)
+        client = PrivatBankClient(session, BASE_URL)
         service = CurrencyService(client)
         result = await service.fetch_history(days_for_query, extra_currencies)
         print(json.dumps(result, ensure_ascii=False, indent=4))

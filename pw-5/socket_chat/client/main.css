@@ -1,0 +1,48 @@
+input[type="text"] {
+  width: 300px;
+  border: 1px solid lightseagreen;
+  padding: 5px 10px;
+  color: darkred;
+  font-size: 16px;
+  font-family:
+    "Cambria", "Cochin", "Georgia", "Times", "Times New Roman", serif;
+}
+
+button {
+  border: 1px solid #ccc;
+  padding: 5px 10px;
+  font-size: 16px;
+  cursor: pointer;
+
+  transition: 300ms all;
+}
+
+button:hover {
+  background: cadetblue;
+}
+
+#subscribe {
+  color: darkblue;
+  font-size: 14px;
+  font-family: "Courier New", "Courier", monospace;
+  margin-top: 20px;
+}
+
+#subscribe pre {
+  margin: 0 0 10px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.json-message {
+  background: #f5f8ff;
+  border: 1px solid #c8d7ff;
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+
+.plain-message {
+  color: blue;
+  font-size: 16px;
+  font-weight: 500;
+}
