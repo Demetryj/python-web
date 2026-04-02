@@ -56,24 +56,24 @@ RESTART IDENTITY CASCADE
 """
 
 
-def ganerate_fake_data(
+def generate_fake_data(
     number_groups: int, number_students: int, number_teachers: int, number_subjects: int
 ) -> tuple[list[str], ...]:
     """Generate fake groups, students, teachers, and subjects."""
-    facke_groups = []
-    facke_students = []
+    fake_groups = []
+    fake_students = []
     fake_teachers = []
     fake_subjects = []
 
     # Generate group names.
     for _ in range(number_groups):
         group_name = fake.bothify(text="??-##")
-        facke_groups.append(group_name)
+        fake_groups.append(group_name)
 
     # Generate student names.
     for _ in range(number_students):
         student_name = fake.name()
-        facke_students.append(student_name)
+        fake_students.append(student_name)
 
     # Generate teacher names.
     for _ in range(number_teachers):
@@ -85,7 +85,7 @@ def ganerate_fake_data(
         subject = " ".join(fake.words(nb=3))
         fake_subjects.append(subject)
 
-    return facke_groups, facke_students, fake_teachers, fake_subjects
+    return fake_groups, fake_students, fake_teachers, fake_subjects
 
 
 def prepare_data(
@@ -121,9 +121,7 @@ def prepare_data(
     # Each student receives up to number_grade_per_student grades.
     grade_data = []
 
-    for _ in students:
-        student_id = randint(1, len(students))
-
+    for student_id in range(1, len(students) + 1):
         for _ in range(number_grade_per_student):
             subject_id = randint(1, len(subjects))
             grade = randint(1, 100)
@@ -181,15 +179,15 @@ def insert_data_to_db(
 
 
 if __name__ == "__main__":
-    fake_data = ganerate_fake_data(
+    fake_data = generate_fake_data(
         number_groups=NUMBER_GROUPS,
         number_students=NUMBER_STUDENTS,
         number_teachers=NUMBERS_TEACHERS,
         number_subjects=NUMBER_SUBJECTS,
     )
 
-    data_for_incert = prepare_data(
+    data_for_insert = prepare_data(
         *fake_data, number_grade_per_student=NUMBER_GRADES_PER_STUDENT
     )
 
-    insert_data_to_db(*data_for_incert)
+    insert_data_to_db(*data_for_insert)
