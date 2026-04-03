@@ -125,7 +125,7 @@ def prepare_data(
         for _ in range(number_grade_per_student):
             subject_id = randint(1, len(subjects))
             grade = randint(1, 100)
-            grade_date = fake.date_this_year().isoformat()
+            grade_date = fake.date_this_year()
             grade_data.append((grade, grade_date, student_id, subject_id))
 
     return group_data,  student_data, teacher_data, subject_data, grade_data
