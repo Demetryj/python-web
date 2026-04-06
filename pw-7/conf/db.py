@@ -5,6 +5,7 @@ from pathlib import Path
 from sqlalchemy import create_engine
 from sqlalchemy.engine import URL
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.exc import SQLAlchemyError
 
 BASE_PATH = Path(__file__).resolve().parent
 
@@ -52,13 +53,14 @@ DBsession = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 
 @contextmanager
 def get_session():
-    # Context manager guarantees commit/rollback/close in the correct order.
+    """Context manager guarantees commit/rollback/close in the correct order."""
     session = DBsession()
     try:
         yield session
         session.commit()
-    except Exception:
+    except (Exception, SQLAlchemyError) as err:
         session.rollback()
+        print(err)
         raise
     finally:
         session.close()
