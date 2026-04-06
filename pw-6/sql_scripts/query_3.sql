@@ -3,7 +3,7 @@
 SELECT 
     gr.group_name,
     sb.subject_name,
-    AVG(g.grade) AS average_grade
+    ROUND(AVG(g.grade), 2) AS average_grade
 FROM grades AS g
 JOIN students AS s ON s.id = g.student_id
 JOIN groups AS gr ON gr.id = s.group_id
