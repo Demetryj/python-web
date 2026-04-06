@@ -1,92 +1,92 @@
 ﻿# PW-7: SQLAlchemy ORM + Alembic + PostgreSQL
 
-Навчальний проєкт для роботи з PostgreSQL через SQLAlchemy ORM.
-Проєкт містить:
-- ORM-моделі для навчального домену (групи, студенти, викладачі, предмети, оцінки);
-- міграції через Alembic;
-- seed-скрипт для генерації тестових даних (Faker);
-- набір аналітичних запитів `select_1 ... select_12`.
+An educational project for working with PostgreSQL using SQLAlchemy ORM.
+The project includes:
+- ORM models for an educational domain (groups, students, teachers, subjects, grades);
+- schema management with Alembic;
+- a seed script for generating test data (Faker);
+- a set of analytical queries `select_1 ... select_12`.
 
-## Структура проєкту
+## Project Structure
 
-- `conf/models.py` - моделі `Group`, `Student`, `Teacher`, `Subject`, `Grade`, зв'язки та обмеження.
-- `conf/db.py` - читання `config.ini`, створення `engine`, фабрика сесій `DBsession`, контекст-менеджер `get_session()`.
-- `repository/my_select.py` - функції-запити `select_1 ... select_12`.
-- `seeds/seed.py` - очищення таблиць (`TRUNCATE ... RESTART IDENTITY CASCADE`) і наповнення тестовими даними.
-- `main.py` - динамічний запуск запитів через `run_query(n, session, **kwargs)`.
-- `alembic/`, `alembic.ini` - міграції та конфігурація Alembic.
-- `config.ini` - параметри підключення до БД (`[DEV_DB]`).
+- `conf/models.py` - models `Group`, `Student`, `Teacher`, `Subject`, `Grade`, relationships, and constraints.
+- `conf/db.py` - reads `config.ini`, creates `engine`, session factory `DBsession`, and context manager `get_session()`.
+- `repository/my_select.py` - query functions `select_1 ... select_12`.
+- `seeds/seed.py` - table cleanup (`TRUNCATE ... RESTART IDENTITY CASCADE`) and test data seeding.
+- `main.py` - dynamic query execution via `run_query(n, session, **kwargs)`.
+- `alembic/`, `alembic.ini` - migrations and Alembic configuration.
+- `config.ini` - database connection parameters (`[DEV_DB]`).
 
-## Вимоги
+## Requirements
 
 - Python 3.13+
 - PostgreSQL
 
-## Встановлення
+## Installation
 
 ```bash
 poetry install
 ```
 
-## Налаштування БД
+## Database Configuration
 
-Заповніть `config.ini` у секції `[DEV_DB]`:
+Fill in the `[DEV_DB]` section in `config.ini`:
 - `USER`
 - `PASSWORD`
 - `DOMAIN`
 - `PORT`
 - `DB_NAME`
 
-## Міграції
+## Migrations
 
 ```bash
 poetry run alembic upgrade head
 ```
 
-## Seed даних
+## Seed Data
 
 ```bash
 poetry run python -m seeds.seed
 ```
 
-Поведінка seed-скрипта:
-- перед вставкою нових даних таблиці очищаються;
-- лічильники `id` скидаються (`RESTART IDENTITY`);
-- повторний запуск не накопичує дублікати старих даних.
+Seed script behavior:
+- clears tables before inserting new data;
+- resets `id` sequences (`RESTART IDENTITY`);
+- repeated runs do not accumulate duplicate old data.
 
-## Запуск запитів
+## Running Queries
 
-`main.py` викликає запит за номером:
-- `run_query(n=..., session=..., **kwargs)` шукає функцію `select_N` у `repository/my_select.py`.
+`main.py` executes a query by number:
+- `run_query(n=..., session=..., **kwargs)` looks up function `select_N` in `repository/my_select.py`.
 
-Поточний приклад у `main.py`:
-- запускається `select_12` з параметрами `group` і `discipline`.
+Current example in `main.py`:
+- runs `select_12` with parameters `group` and `discipline`.
 
-Типові параметри для запитів:
-- `discipline` - назва предмета;
-- `group` - назва групи;
-- `student` - ПІБ студента (`"Ім'я Прізвище"`);
-- `lector` - ПІБ викладача (`"Ім'я Прізвище"`).
+Typical query parameters:
+- `discipline` - subject name;
+- `group` - group name;
+- `student` - student full name (`"FirstName LastName"`);
+- `lector` - teacher full name (`"FirstName LastName"`).
 
-## Набір запитів
+## Query List
 
-- `select_1` - топ-5 студентів за середнім балом.
-- `select_2` - студент із найвищим середнім з конкретного предмета.
-- `select_3` - середній бал по групах із конкретного предмета.
-- `select_4` - середній бал по всій таблиці оцінок.
-- `select_5` - предмети конкретного викладача.
-- `select_6` - список студентів конкретної групи.
-- `select_7` - оцінки студентів групи з конкретного предмета.
-- `select_8` - середній бал, який ставить конкретний викладач.
-- `select_9` - список предметів конкретного студента.
-- `select_10` - предмети, які конкретний викладач викладає конкретному студенту.
-- `select_11` - середній бал, який конкретний викладач ставить конкретному студенту.
-- `select_12` - оцінки студентів групи з предмета на останньому занятті.
+- `select_1` - top 5 students by average grade.
+- `select_2` - student with the highest average in a specific subject.
+- `select_3` - average grade by groups for a specific subject.
+- `select_4` - average grade across the whole grades table.
+- `select_5` - subjects taught by a specific teacher.
+- `select_6` - list of students in a specific group.
+- `select_7` - grades of students in a group for a specific subject.
+- `select_8` - average grade given by a specific teacher.
+- `select_9` - list of subjects taken by a specific student.
+- `select_10` - subjects taught by a specific teacher to a specific student.
+- `select_11` - average grade a specific teacher gives to a specific student.
+- `select_12` - students' grades in a group for a subject on the last lesson date.
 
-## Важливо
+## Important
 
-Запускайте модулі з кореня `pw-7`:
-- правильно: `poetry run python -m seeds.seed`
-- правильно: `poetry run python -m main`
+Run modules from the `pw-7` root:
+- correct: `poetry run python -m seeds.seed`
+- correct: `poetry run python -m main`
 
-Це потрібно для коректної роботи імпортів.
+This is required for imports to work correctly.
