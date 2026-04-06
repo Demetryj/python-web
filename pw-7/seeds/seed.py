@@ -1,4 +1,6 @@
 from faker import Faker
+from sqlalchemy import text
+from sqlalchemy.orm import Session
 
 from random import randint
 
@@ -56,7 +58,7 @@ def create_teachers() -> list[Teacher]:
 
     return [
         Teacher(
-            first_name=fake.file_name(),
+            first_name=fake.first_name(),
             last_name=fake.last_name(),
             email=fake.email(),
             phone=fake.phone_number()[:20],
@@ -84,10 +86,24 @@ def create_grades(students: list[Student], subjects: list[Subject]) -> list[Grad
     return grades
 
 
+def clear_tables(session: Session) -> None:
+    """Remove old data and reset identities before inserting fresh seed data."""
+
+    session.execute(
+        text(
+            "TRUNCATE TABLE grades, students, subjects, teachers, groups "
+            "RESTART IDENTITY CASCADE"
+        )
+    )
+
+
 def seed():
     """Fill database tables with fake groups, students, teachers, subjects, and grades."""
 
     with get_session() as session:
+        # Clear all tables first so repeated seed runs do not duplicate data.
+        clear_tables(session)
+         
         groups = create_groups()
         session.add_all(groups)
         # flush() sends INSERTs to DB without commit, so new rows get
