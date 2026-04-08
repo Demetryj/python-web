@@ -5,7 +5,7 @@ from pymongo.errors import PyMongoError
 # If a database has already been created in MongoDB Atlas, then for the connection we use:
 # connect(host=f"""mongodb+srv://{mongo_user}:{mongodb_pass}@{domain}/{db_name}?retryWrites=true&w=majority""", ssl=True)
 
-def init_db():
+def init_mongoDB():
     try:
         connect(
             db="test-hw-mongo",
