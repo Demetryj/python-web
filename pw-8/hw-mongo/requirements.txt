@@ -1,0 +1,4 @@
+mongoengine==0.29.3
+pymongo==4.16.0
+redis==7.4.0
+redis-lru==0.1.2
