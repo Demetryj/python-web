@@ -19,13 +19,7 @@ Educational project for working with `MongoDB + RabbitMQ` in Python (`pika`, `mo
 
 ## Quick Start
 
-1. Go to the project directory:
-
-```bash
-cd /c/projects/pyton-education/python-web/pw-8/hw-rabbitmq
-```
-
-2. Start infrastructure services:
+1. Start infrastructure services:
 
 ```bash
 docker compose up -d
