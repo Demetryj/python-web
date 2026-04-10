@@ -25,6 +25,12 @@ def init_mongoDB():
     
 EXCHANGE_NAME_1 = "pw-8-exchange-1"
 QUEUE_NAME_1 = "pw_8_queue_1"
+
+EXCHANGE_NAME_2 = "pw-8-exchange-2"
+QUEUE_NAME_SMS = "pw_8_queue_sms"
+QUEUE_NAME_EMAIL = "pw_8_queue_email"
+ROUTING_KEY_SMS= "sms" 
+ROUTING_KEY_EMAIL= "email"
     
 def init_rabbitMQ():
     """Create and return RabbitMQ blocking connection."""
