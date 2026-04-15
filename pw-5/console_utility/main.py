@@ -7,7 +7,7 @@ from aiohttp import ClientSession, ClientTimeout
 from classes_ import PrivatBankClient, CurrencyService, CurrencyNotFoundError, HttpError
 
 BASE_URL = "https://api.privatbank.ua/p24api/exchange_rates?json&date="
- 
+
 
 def parse_args(argv: list[str]) -> tuple[int, set[str]]:
     """Parse CLI arguments: days and optional extra currency codes."""
@@ -17,7 +17,9 @@ def parse_args(argv: list[str]) -> tuple[int, set[str]]:
 
     days_for_query = int(argv[1])
     if days_for_query < 1 or days_for_query > 10:
-        raise ValueError("The number of days must be greater than 0 and no more than 10.")
+        raise ValueError(
+            "The number of days must be greater than 0 and no more than 10."
+        )
 
     extra_currencies = {currency.upper() for currency in argv[2:]}
     return days_for_query, extra_currencies

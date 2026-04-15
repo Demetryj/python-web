@@ -13,7 +13,9 @@ AUTHORS_FILE_PATH = BASE_PATH.joinpath("data/authors.json")
 QUOTES_FILE_PATH = BASE_PATH.joinpath("data/quotes.json")
 
 
-def fetch(session: requests.Session, url: str, timeout: int = 10) -> requests.Response | None:
+def fetch(
+    session: requests.Session, url: str, timeout: int = 10
+) -> requests.Response | None:
     """Fetch URL and return response only for HTTP 200; otherwise return None."""
     try:
         response = session.get(url, timeout=timeout)
@@ -79,7 +81,7 @@ def parse_data(
             continue
 
         author_name = author.text.strip()
-        if "Alexandre Dumas" in  author_name:
+        if "Alexandre Dumas" in author_name:
             author_name = "Alexandre Dumas-fils"
 
         about_author_tag = author.find_next_sibling("a")
@@ -136,7 +138,7 @@ def main() -> None:
 
     # Reuse one HTTP session for all requests to reduce connection overhead.
     with requests.Session() as session:
-    # Iterate through all pages while a next-page link exists.
+        # Iterate through all pages while a next-page link exists.
         while next_page_url:
             html_doc = fetch(session, next_page_url)
             if html_doc is None:
@@ -151,7 +153,9 @@ def main() -> None:
             authors.extend(page_authors)
 
             # Build absolute URL for the next page.
-            next_page_url = urljoin(SCRAP_URL, next_page_link) if next_page_link else None
+            next_page_url = (
+                urljoin(SCRAP_URL, next_page_link) if next_page_link else None
+            )
 
     # Save final collections into JSON files.
     quotes_ok = write_in_file(QUOTES_FILE_PATH, quotes)
@@ -160,7 +164,7 @@ def main() -> None:
     if not (quotes_ok and authors_ok):
         print("Completed with write errors.")
     else:
-        print('Data successfully written to files.')
+        print("Data successfully written to files.")
 
 
 if __name__ == "__main__":

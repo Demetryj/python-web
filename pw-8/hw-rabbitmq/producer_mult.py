@@ -32,7 +32,7 @@ def insert_contacts() -> str:
                 phone=fake.phone_number()[:25],
                 address=fake.address()[:120],
                 is_sent=False,
-                send_to=choice([ROUTING_KEY_SMS, ROUTING_KEY_EMAIL])
+                send_to=choice([ROUTING_KEY_SMS, ROUTING_KEY_EMAIL]),
             )
             contact.save()
         return "Ok"
@@ -57,7 +57,7 @@ def main():
         # Connect to RabbitMQ and prepare exchange/queue.
         connection = init_rabbitMQ()
         channel = connection.channel()
-        
+
         # Creating two queues and binding them to the exchange
         channel.exchange_declare(
             exchange=EXCHANGE_NAME_2, exchange_type="direct", durable=True

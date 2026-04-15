@@ -3,9 +3,9 @@ from psycopg2.extensions import connection as PgConnection
 
 
 def create_table(conn: PgConnection, create_table_sql: str) -> None:
-    """ Create a table from the create_table_sql statement
-        :param conn: Connection object
-        :param create_table_sql: a CREATE TABLE statement
+    """Create a table from the create_table_sql statement
+    :param conn: Connection object
+    :param create_table_sql: a CREATE TABLE statement
     """
     try:
         # Get a cursor object from the connection.

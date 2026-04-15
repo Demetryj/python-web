@@ -53,7 +53,9 @@ def main():
 
         # Process one message at a time per consumer instance.
         channel.basic_qos(prefetch_count=1)
-        channel.basic_consume(queue=QUEUE_NAME_SMS, on_message_callback=callback_handler)
+        channel.basic_consume(
+            queue=QUEUE_NAME_SMS, on_message_callback=callback_handler
+        )
         channel.start_consuming()
     finally:
         if connection and connection.is_open:

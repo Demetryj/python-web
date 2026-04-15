@@ -103,7 +103,7 @@ def seed():
     with get_session() as session:
         # Clear all tables first so repeated seed runs do not duplicate data.
         clear_tables(session)
-         
+
         groups = create_groups()
         session.add_all(groups)
         # flush() sends INSERTs to DB without commit, so new rows get

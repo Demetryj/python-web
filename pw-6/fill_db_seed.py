@@ -128,7 +128,7 @@ def prepare_data(
             grade_date = fake.date_this_year()
             grade_data.append((grade, grade_date, student_id, subject_id))
 
-    return group_data,  student_data, teacher_data, subject_data, grade_data
+    return group_data, student_data, teacher_data, subject_data, grade_data
 
 
 def insert_data_to_db(

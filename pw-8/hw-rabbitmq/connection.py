@@ -8,6 +8,7 @@ from typing import Optional
 # If a database has already been created in MongoDB Atlas, then for the connection we use:
 # connect(host=f"""mongodb+srv://{mongo_user}:{mongodb_pass}@{domain}/{db_name}?retryWrites=true&w=majority""", ssl=True)
 
+
 def init_mongoDB():
     """Initialize MongoDB connection and verify it with a ping."""
     try:
@@ -21,23 +22,26 @@ def init_mongoDB():
         get_connection().admin.command("ping")
     except PyMongoError as err:
         raise RuntimeError(f"Mongo connection failed: {err}")
-    
-    
+
+
 EXCHANGE_NAME_1 = "pw-8-exchange-1"
 QUEUE_NAME_1 = "pw_8_queue_1"
 
 EXCHANGE_NAME_2 = "pw-8-exchange-2"
 QUEUE_NAME_SMS = "pw_8_queue_sms"
 QUEUE_NAME_EMAIL = "pw_8_queue_email"
-ROUTING_KEY_SMS= "sms" 
-ROUTING_KEY_EMAIL= "email"
-    
+ROUTING_KEY_SMS = "sms"
+ROUTING_KEY_EMAIL = "email"
+
+
 def init_rabbitMQ():
     """Create and return RabbitMQ blocking connection."""
     try:
-        credentials = pika.PlainCredentials('guest', 'guest')
+        credentials = pika.PlainCredentials("guest", "guest")
         connection = pika.BlockingConnection(
-            pika.ConnectionParameters(host='localhost', port=5672, credentials=credentials)
+            pika.ConnectionParameters(
+                host="localhost", port=5672, credentials=credentials
+            )
         )
         return connection
     except ProbableAuthenticationError as e:

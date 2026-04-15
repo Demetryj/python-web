@@ -5,7 +5,6 @@ from mongoengine import disconnect
 from connection import init_mongoDB
 from models import Author, Quote
 
-
 # connect to Redis DB
 client = redis.StrictRedis(host="localhost", port=6379, password=None)
 cache = RedisLRU(client)
@@ -62,6 +61,7 @@ def parse_input(user_input: str):
     command, value = row.split(":", 1)
     return command.strip().lower(), value.strip()
 
+
 @cache
 def find_quotes_by_author_name(author_name: str) -> list[str]:
     """
@@ -91,13 +91,14 @@ def find_quotes_by_author_name(author_name: str) -> list[str]:
     author_name = author_name.strip()
     if not author_name:
         return []
-    
+
     authors = Author.objects(fullname__iregex=author_name)
     if not authors:
         return []
 
     quotes = Quote.objects(author__in=authors)
     return [q.quote for q in quotes]
+
 
 @cache
 def find_quotes_by_tag(tag: str) -> list[str]:
@@ -170,7 +171,7 @@ def main():
     """
     print(bot_command_list)
     init_mongoDB()
-        
+
     try:
         while True:
             user_input = input(">>> Enter a command: ")
@@ -190,8 +191,7 @@ def main():
                     print("Unknown command")
     finally:
         disconnect(alias="default")
-                
-    
+
 
 if __name__ == "__main__":
     main()

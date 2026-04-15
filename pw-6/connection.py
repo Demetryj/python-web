@@ -9,10 +9,17 @@ PASSWORD = "postgres"
 HOST = "localhost"
 PORT = 5432
 
+
 @contextmanager
-def create_connection(database:str=DATABASE, user:str=USER, password:str=PASSWORD, host:str=HOST, port:int=PORT):
-    """ Create a database connection to a PostgreSQL database """
-    
+def create_connection(
+    database: str = DATABASE,
+    user: str = USER,
+    password: str = PASSWORD,
+    host: str = HOST,
+    port: int = PORT,
+):
+    """Create a database connection to a PostgreSQL database"""
+
     connection = None
 
     try:

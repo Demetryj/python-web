@@ -4,10 +4,12 @@ from connection import create_connection
 
 Row = tuple[object, ...]
 
-            
-def execute_select_query(sql: str, params: tuple | list | dict | None = None) -> list[Row]:
+
+def execute_select_query(
+    sql: str, params: tuple | list | dict | None = None
+) -> list[Row]:
     """Execute a SELECT query and return all fetched rows."""
-    
+
     with create_connection() as connection:
         try:
             with connection.cursor() as cursor:

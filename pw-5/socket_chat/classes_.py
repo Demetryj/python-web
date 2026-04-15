@@ -37,7 +37,7 @@ class PrivatBankClient:
         self.session = session
         self.base_url = base_url
 
-    async def fetch_rates_by_date(self, date: str="") -> JSON:
+    async def fetch_rates_by_date(self, date: str = "") -> JSON:
         """Fetch and return raw API response for one date or current date."""
 
         url = f"{self.base_url}{date}" if date else self.base_url
@@ -50,7 +50,6 @@ class PrivatBankClient:
             raise HttpError(f"Connection error. {err}") from err
         except Exception as err:
             raise HttpError(f"Unexpected error: {err}") from err
-
 
 
 class CurrencyService:
@@ -109,7 +108,9 @@ class CurrencyService:
 
         return {data["date"]: currencies_by_date}
 
-    async def fetch_history(self, days: int, extra_currencies: set[str]=set()) -> list[JSON]:
+    async def fetch_history(
+        self, days: int, extra_currencies: set[str] = set()
+    ) -> list[JSON]:
         """Fetch and return currency history for requested period and codes."""
 
         dates = self.get_dates_for_query(days)
@@ -122,4 +123,6 @@ class CurrencyService:
         tasks = [self.provider.fetch_rates_by_date(date) for date in dates]
         raw_results = await asyncio.gather(*tasks)
 
-        return [self.adapt_response(day_data, target_currencies) for day_data in raw_results]
+        return [
+            self.adapt_response(day_data, target_currencies) for day_data in raw_results
+        ]

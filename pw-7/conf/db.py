@@ -23,7 +23,9 @@ if not config.has_section("DEV_DB"):
 
 # Validate the required connection parameters.
 required_options = ("USER", "PASSWORD", "DOMAIN", "PORT", "DB_NAME")
-missing_options = [opt for opt in required_options if not config.has_option("DEV_DB", opt)]
+missing_options = [
+    opt for opt in required_options if not config.has_option("DEV_DB", opt)
+]
 if missing_options:
     missing = ", ".join(missing_options)
     raise ValueError(f"Missing option(s) in [DEV_DB]: {missing}")

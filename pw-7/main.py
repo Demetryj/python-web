@@ -28,4 +28,4 @@ def main(session: Session, **kwargs):
 if __name__ == "__main__":
 
     with get_session() as session:
-        main(session, group="Pb-75", discipline = "majority various speak")
+        main(session, group="Pb-75", discipline="majority various speak")

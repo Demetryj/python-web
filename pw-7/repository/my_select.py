@@ -219,7 +219,7 @@ def select_11(session: Session, student: str = "", lector: str = ""):
 
 def select_12(session: Session, group: str = "", discipline: str = ""):
     """Student grades in a specific group for a specific subject in the last lesson."""
-    
+
     max_date_subq = (
         select(func.max(Grade.grade_date))
         .join(Student, Student.id == Grade.student_id)

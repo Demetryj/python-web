@@ -34,8 +34,8 @@ def insert_contacts() -> str:
     except PyMongoError as err:
         print(f"MongoDB error: {err}")
         raise
-    
-    
+
+
 def main():
     init_mongoDB()
     Contact.objects().delete()  # Clear collection if it already contains data.
@@ -46,7 +46,7 @@ def main():
         # Connect to RabbitMQ and prepare exchange/queue.
         connection = init_rabbitMQ()
         channel = connection.channel()
-        channel.exchange_declare(exchange=EXCHANGE_NAME_1, exchange_type='direct')
+        channel.exchange_declare(exchange=EXCHANGE_NAME_1, exchange_type="direct")
         channel.queue_declare(queue=QUEUE_NAME_1, durable=True)
         channel.queue_bind(exchange=EXCHANGE_NAME_1, queue=QUEUE_NAME_1)
 
@@ -62,7 +62,8 @@ def main():
                 body=str(contact_id).encode(),
                 properties=pika.BasicProperties(
                     delivery_mode=pika.spec.PERSISTENT_DELIVERY_MODE
-                ))
+                ),
+            )
 
             print("[x] Sent %r" % contact.to_mongo().to_dict())
     except AMQPConnectionError as err:

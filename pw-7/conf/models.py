@@ -111,16 +111,20 @@ class Grade(Base):
     # grade = Column(Integer, CheckConstraint("grade BETWEEN 1 AND 100"), nullable=False)
     grade_date = Column(Date, nullable=False)
     create_at = Column(DateTime, default=datetime.now())
-    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False)
-    subject_id = Column(Integer, ForeignKey("subjects.id", ondelete="CASCADE"), nullable=False)
-    student = relationship("Student", backref='grades')
-    subject = relationship("Subject", backref='grades')
+    student_id = Column(
+        Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False
+    )
+    subject_id = Column(
+        Integer, ForeignKey("subjects.id", ondelete="CASCADE"), nullable=False
+    )
+    student = relationship("Student", backref="grades")
+    subject = relationship("Subject", backref="grades")
 
     __table_args__ = (
         CheckConstraint(column("grade").between(1, 100), name="chk_grade_range"),
         # CheckConstraint("grade >= 1 AND grade <= 100", name="chk_grade_range"),
     )
-    
+
     def __repr__(self):
         return f"id: {self.id}, grade: {self.grade}, date: {self.grade_date}"
 

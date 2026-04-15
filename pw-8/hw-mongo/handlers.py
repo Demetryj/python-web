@@ -19,6 +19,7 @@ def handle_file_errors(func):
         except json.JSONDecodeError as err:
             print(f"Invalid JSON: {err}")
             raise
+
     return wrapper
 
 
@@ -39,4 +40,5 @@ def handle_db_errors(func):
         except PyMongoError as err:
             print(f"MongoDB error: {err}")
             raise
+
     return wrapper
