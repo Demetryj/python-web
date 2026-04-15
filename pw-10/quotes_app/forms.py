@@ -1,3 +1,10 @@
+"""Form classes for creating and validating Author and Quote records.
+
+Contains:
+- AuthorForm for author profile data input
+- QuoteForm for quote text, author selection, and tag selection
+"""
+
 from django.forms import (
     ModelChoiceField,
     ModelForm,

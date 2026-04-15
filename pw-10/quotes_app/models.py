@@ -1,3 +1,11 @@
+"""Data models for the quotes application.
+
+Defines:
+- Author: quote author profile data
+- Tag: reusable tag label
+- Quote: quote text linked to one author and many tags
+"""
+
 from django.db import models
 
 

@@ -1,3 +1,11 @@
+""" URL routes for the quotes_app.
+ This file maps HTTP paths to view functions:
+ - main page with quotes list
+ - author details page
+ - add author page
+ - add quote page
+ """
+
 from django.urls import path
 from . import views
 
