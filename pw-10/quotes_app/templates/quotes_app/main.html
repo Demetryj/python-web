@@ -1,8 +1,107 @@
 {% extends 'quotes_app/base.html' %} {% block content %}
 
-<div>
-  <h1>Main page</h1>
-  <h4>{{msg}}</h4>
+<div class="row">
+  {% if page_obj %}
+
+  <div class="col-md-8">
+    {% for item in page_obj %}
+
+    <div class="quote" itemscope="" itemtype="http://schema.org/CreativeWork">
+      <span class="text" itemprop="text"> {{ item.quote }}</span>
+      <span
+        >by
+        <small class="author" itemprop="author">{{ item.author }}</small>
+        <a class="about" href="/author/{{ item.author.id }}">(about)</a>
+      </span>
+
+      {% if item.tags %}
+      <div class="tags">
+        Tags:
+        <meta
+          class="keywords"
+          itemprop="keywords"
+          content="change,deep-thoughts,thinking,world"
+        />
+
+        {% for tag in item.tags.all %}
+        <a class="tag" href="#">{{ tag }}</a>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+
+    <ul class="pager">
+      <li class="previous">
+        <a
+          href="{% if page_obj.has_previous %}?page={{ page_obj.previous_page_number }}{% else %}#{% endif %}"
+          class="{% if not page_obj.has_previous %} disabled {% endif %}"
+          ><span aria-hidden="true">&larr;</span> Previous</a
+        >
+      </li>
+
+      <li class="next">
+        <a
+          href="{% if page_obj.has_next %}?page={{ page_obj.next_page_number }}{% else %}#{% endif %}"
+          class="{% if not page_obj.has_next %} disabled {% endif %}"
+          >Next <span aria-hidden="true">&rarr;</span></a
+        >
+      </li>
+    </ul>
+  </div>
+
+  {% else %}
+  <p>No quote yet.</p>
+
+  {% endif %} {% comment %}
+  <div class="col-md-4 tags-box">
+    <h2>Top Ten tags</h2>
+
+    <span class="tag-item">
+      <a class="tag" style="font-size: 28px" href="/tag/love/">love</a>
+    </span>
+
+    <span class="tag-item">
+      <a class="tag" style="font-size: 26px" href="/tag/inspirational/"
+        >inspirational</a
+      >
+    </span>
+
+    <span class="tag-item">
+      <a class="tag" style="font-size: 26px" href="/tag/life/">life</a>
+    </span>
+
+    <span class="tag-item">
+      <a class="tag" style="font-size: 24px" href="/tag/humor/">humor</a>
+    </span>
+
+    <span class="tag-item">
+      <a class="tag" style="font-size: 22px" href="/tag/books/">books</a>
+    </span>
+
+    <span class="tag-item">
+      <a class="tag" style="font-size: 14px" href="/tag/reading/">reading</a>
+    </span>
+
+    <span class="tag-item">
+      <a class="tag" style="font-size: 10px" href="/tag/friendship/"
+        >friendship</a
+      >
+    </span>
+
+    <span class="tag-item">
+      <a class="tag" style="font-size: 8px" href="/tag/friends/">friends</a>
+    </span>
+
+    <span class="tag-item">
+      <a class="tag" style="font-size: 8px" href="/tag/truth/">truth</a>
+    </span>
+
+    <span class="tag-item">
+      <a class="tag" style="font-size: 6px" href="/tag/simile/">simile</a>
+    </span>
+  </div>
+  {% endcomment %}
 </div>
 
 {% endblock %}

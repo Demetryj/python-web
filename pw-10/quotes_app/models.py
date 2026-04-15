@@ -7,8 +7,8 @@ class Author(models.Model):
     born_location = models.CharField(max_length=300)
     description = models.TextField()
 
-    def __str__(self):
-        return f"{self.fullname}"
+    # def __str__(self):
+    #     return f"{self.fullname}"
 
 
 class Tag(models.Model):
@@ -23,8 +23,8 @@ class Quote(models.Model):
     tags = models.ManyToManyField(Tag, blank=True, related_name="quotes")
     quote = models.TextField(unique=True)
 
-    def __str__(self):
-        return self.quote[:60]
+    # def __str__(self):
+    #     return self.quote[:60]
 
 
 # Because of the ManyToManyField between Quote and Tag, Django automatically
