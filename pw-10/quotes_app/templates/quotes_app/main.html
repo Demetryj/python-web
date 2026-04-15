@@ -10,7 +10,9 @@
       <span class="text" itemprop="text"> {{ item.quote }}</span>
       <span
         >by
-        <small class="author" itemprop="author">{{ item.author }}</small>
+        <small class="author" itemprop="author"
+          >{{ item.author.fullname }}</small
+        >
         <a class="about" href="/author/{{ item.author.id }}">(about)</a>
       </span>
 
