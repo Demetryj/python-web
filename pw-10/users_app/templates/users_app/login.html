@@ -1,0 +1,39 @@
+{% extends "users_app/base.html" %} {% block content %}
+
+<h2 style="text-align: center">Sign In</h2>
+
+<a
+  href="{% url 'quotes_app:main' %}"
+  style="text-decoration: none"
+  class="back-link"
+  >&larr; Home</a
+>
+
+<form method="post" action="{% url 'users_app:login' %}" class="auth-form">
+  {% csrf_token %}
+  <div>
+    <label> Username: {{ form.username }} </label>
+    <span>{{ form.errors.username }}</span>
+  </div>
+  <br />
+  <div>
+    <label> Password: {{ form.password }} </label>
+    <span>{{ form.errors.password }}</span>
+  </div>
+  <div class="mt-4">
+    <button type="submit" class="btn btn-primary">Submit</button>
+    <button type="reset" class="btn btn-secondary">Reset</button>
+  </div>
+
+  {% if messages %}
+  <div class="mb-3">
+    {% for message in messages %}
+    <div {% if message.tags %} class="alert-{{ message.tags }}" {% endif %}>
+      {{ message }}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</form>
+
+{% endblock %}

@@ -1,4 +1,4 @@
-{% extends 'base.html' %} {% block content %}
+{% extends 'quotes_app/base.html' %} {% block content %}
 
 <div class="row">
   {% if page_obj %}
@@ -13,10 +13,12 @@
         <small class="author" itemprop="author"
           >{{ item.author.fullname }}</small
         >
-        <a class="about" href="/author/{{ item.author.id }}">(about)</a>
+        <a class="about" href="{% url 'quotes_app:author' item.author.id %}"
+          >(about)</a
+        >
       </span>
 
-      {% if item.tags %}
+      {% if item.tags.all %}
       <div class="tags">
         Tags:
         <meta
@@ -26,7 +28,10 @@
         />
 
         {% for tag in item.tags.all %}
-        <a class="tag" href="#">{{ tag }}</a>
+        <a class="tag" href="{% url 'quotes_app:quotes_by_tag' tag.id %}"
+          >{{ tag }}</a
+        >
+
         {% endfor %}
       </div>
       {% endif %}

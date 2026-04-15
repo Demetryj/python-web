@@ -26,6 +26,7 @@
         </h1>
 
         <nav>
+          {% if user.is_authenticated %}
           <a
             href="{% url 'quotes_app:add_author' %}"
             style="text-decoration: none"
@@ -38,6 +39,29 @@
             class="btn btn-outline-info"
             >Add quote</a
           >
+
+          <a
+            href="{% url 'users_app:logout' %}"
+            style="text-decoration: none"
+            class="btn btn-primary"
+            >Logout</a
+          >
+          {% else %}
+          <a
+            href="{% url 'users_app:signup' %}"
+            style="text-decoration: none"
+            class="btn btn-primary"
+            >Sign Up</a
+          >
+
+          <a
+            href="{% url 'users_app:login' %}"
+            style="text-decoration: none"
+            class="btn btn-primary"
+            >Sign in</a
+          >
+
+          {% endif %}
         </nav>
       </div>
     </header>

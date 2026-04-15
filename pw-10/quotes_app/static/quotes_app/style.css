@@ -165,3 +165,11 @@ nav {
 .back-link:hover {
   color: blue;
 }
+
+.auth-form {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 300px;
+  gap: 16px;
+}
