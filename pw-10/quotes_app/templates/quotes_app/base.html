@@ -24,6 +24,21 @@
         <h1>
           <a href="/" style="text-decoration: none">Quotes to Scrape</a>
         </h1>
+
+        <nav>
+          <a
+            href="{% url 'quotes_app:add_author' %}"
+            style="text-decoration: none"
+            class="btn btn-outline-info"
+            >Add author</a
+          >
+          <a
+            href="{% url 'quotes_app:add_quote' %}"
+            style="text-decoration: none"
+            class="btn btn-outline-info"
+            >Add quote</a
+          >
+        </nav>
       </div>
     </header>
 

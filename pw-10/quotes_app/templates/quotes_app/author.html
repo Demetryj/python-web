@@ -1,5 +1,12 @@
 {% extends 'quotes_app/base.html' %} {% block content %}
 
+<a
+  href="{% url 'quotes_app:main' %}"
+  style="text-decoration: none"
+  class="back-link"
+  >&larr; Back</a
+>
+
 <div class="author-details">
   <h3 class="author-title">{{ author_obj.fullname }}</h3>
   <p>

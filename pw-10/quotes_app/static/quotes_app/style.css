@@ -134,3 +134,34 @@ a {
   text-align: justify;
   margin-bottom: 20px;
 }
+
+.error-text {
+  color: red;
+}
+
+.form {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 50%;
+}
+
+header .container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.back-link {
+  margin-bottom: 16px;
+}
+.back-link:hover {
+  color: blue;
+}
