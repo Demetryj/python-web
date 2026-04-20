@@ -1,0 +1,95 @@
+services:
+  # Active variant:
+  # - db has healthcheck
+  # - fastapi starts only after db is healthy
+  # This replaces run.sh orchestration inside the container.
+  db:
+    image: postgres:16
+    container_name: postgres_server
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # If the migration file already exists in src/migrations/versions
+  migrate:
+    build: .
+    env_file: .env
+    volumes:
+      - ./:/app
+      - /app/.venv
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ["poetry", "run", "alembic", "upgrade", "head"]
+
+  fastapi-server:
+    build: .
+    env_file: .env
+    volumes:
+      - ./:/app
+      - /app/.venv
+    depends_on:
+      db:
+        condition: service_healthy
+        # If the migration file already exists in src/migrations/versions
+      migrate:
+        condition: service_completed_successfully
+    command:
+      [
+        "poetry",
+        "run",
+        "uvicorn",
+        "main:app",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8000",
+        "--reload",
+      ]
+    ports:
+      - "8000:8000"
+
+volumes:
+  postgres_data:
+
+# Alternative variant (kept as reference):
+# Simple compose without migrate service.
+# Typically used together with Dockerfile CMD/entrypoint run.sh,
+# where run.sh handles wait-for-db + alembic + uvicorn startup flow.
+# services:
+#   db:
+#     image: postgres:16
+#     container_name: postgres_server
+#     restart: always
+#     environment:
+#       POSTGRES_USER: ${DB_USER}
+#       POSTGRES_PASSWORD: ${DB_PASSWORD}
+#       POSTGRES_DB: $DB_NAME
+#     volumes:
+#       - postgres_data:/var/lib/postgresql/data
+#     ports:
+#       - "5432:5432"
+
+#   fastapi-server:
+#     build: .
+#     env_file: .env
+#     volumes:
+#       - ./:/app/
+#     depends_on:
+#       - db
+#     ports:
+#       - "8000:8000"
+
+# volumes:
+#   postgres_data:
