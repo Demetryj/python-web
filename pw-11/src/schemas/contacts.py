@@ -56,6 +56,8 @@ class ContactPutSchema(ContactSchema):
 
 class ContactResponse(ContactSchema):
     id: int
+    created_at: datetime
+    updated_at: datetime
 
     @field_serializer("birth_date")
     def serialize_birth_date(self, value: date) -> str:
