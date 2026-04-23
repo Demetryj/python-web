@@ -4,6 +4,10 @@ REST API for contacts management with async SQLAlchemy, Alembic migrations, and 
 
 ## Features
 
+- User signup and login (`JWT` access + refresh tokens)
+- Refresh token rotation
+- Logout (refresh token revocation)
+- Auth-protected contacts endpoints
 - Create a contact
 - Get all contacts (pagination)
 - Get contact by id
@@ -24,7 +28,7 @@ REST API for contacts management with async SQLAlchemy, Alembic migrations, and 
 
 ## Environment Variables
 
-Create `.env` in project root (`pw-11`) with:
+Create `.env` in project root (`pw-12`) with:
 
 ```env
 DB_USER=postgres
@@ -78,6 +82,18 @@ docker compose down
 
 ## API Routes
 
+### Auth routes
+
+Base prefix: `/api/auth`
+
+- `POST /signup` - create a new user account
+- `POST /signin` - login by username(email) + password, returns `access_token` and `refresh_token`
+- `GET /me` - get current user profile (requires access token)
+- `GET /refresh-token` - rotate refresh token and issue a new token pair (requires refresh token in `Authorization: Bearer ...`)
+- `POST /logout` - revoke provided refresh token (requires refresh token in `Authorization: Bearer ...`)
+
+### Contacts routes
+
 Base prefix: `/api/contacts`
 
 - `GET /all?limit=10&offset=0` - list contacts
@@ -88,6 +104,16 @@ Base prefix: `/api/contacts`
 - `PUT /{contact_id}` - full update
 - `PATCH /{contact_id}` - partial update
 - `DELETE /{contact_id}` - delete contact (204)
+
+All `/api/contacts/*` routes require `Authorization: Bearer <access_token>`.
+
+## Authentication Flow
+
+1. `POST /api/auth/signup` - register a user.
+2. `POST /api/auth/signin` - get `access_token` and `refresh_token`.
+3. Use `access_token` in `Authorization: Bearer <access_token>` for contacts endpoints.
+4. When access token expires, call `GET /api/auth/refresh-token` with refresh token in `Authorization` header.
+5. To logout, call `POST /api/auth/logout` with refresh token in `Authorization` header.
 
 ## Data Validation Notes
 
@@ -135,7 +161,7 @@ docker compose logs -f fastapi-server
 ## Project Structure
 
 ```text
-pw-11/
+pw-12/
   main.py
   docker-compose.yaml
   Dockerfile
@@ -143,9 +169,15 @@ pw-11/
   src/
     config/settings.py
     database/db.py
-    entity/contacts/models.py
+    entity/models.py
+    repository/auth.py
     repository/contacts.py
+    repository/users.py
+    routes/auth.py
     routes/contacts.py
+    schemas/auth.py
     schemas/contacts.py
+    schemas/users.py
+    services/auth.py
     migrations/
 ```

@@ -10,7 +10,7 @@ from alembic import context
 
 
 from src.config.settings import settings as app_config
-from src.entity.contacts.models import Base
+from src.entity.models import Base
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

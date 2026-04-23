@@ -41,6 +41,7 @@ class ContactUpdateSchema(BaseModel):
         examples=["20-04-2026"],
     )
     additional_data: str | None = None
+   
 
     @field_validator("birth_date", mode="before")
     @classmethod
@@ -58,7 +59,8 @@ class ContactResponse(ContactSchema):
     id: int
     created_at: datetime
     updated_at: datetime
-
+    user_id: int
+    
     @field_serializer("birth_date")
     def serialize_birth_date(self, value: date) -> str:
         return value.strftime("%d-%m-%Y")
