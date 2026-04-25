@@ -9,15 +9,26 @@ from src.schemas.contacts import (
     ContactResponse,
 )
 from src.database.db import get_db
-from src.entity.models import User
+from src.entity.models import User, Role
 from src.services.auth import auth_service
+from src.services.role import RoleAccess
 
 router = APIRouter(prefix="/contacts", tags=["contacts"])
+
+# Reusable RBAC dependency for read endpoints; allows admin/moderator/user roles.
+allowed_operation_get = RoleAccess([Role.admin, Role.moderator, Role.user])
+allowed_operation_create = RoleAccess([Role.admin, Role.moderator, Role.user])
+allowed_operation_update = RoleAccess([Role.admin, Role.moderator, Role.user])
+allowed_operation_delete = RoleAccess([Role.admin, Role.moderator, Role.user])
+admin_only = RoleAccess([Role.admin])
 
 
 # Get paginated list of all contacts.
 @router.get(
-    "/all", response_model=list[ContactResponse], response_description="Success"
+    "/all",
+    response_model=list[ContactResponse],
+    response_description="Success",
+    dependencies=[Depends(allowed_operation_get)],
 )
 async def get_contacts(
     limit: int = Query(default=10, ge=1, le=100),
@@ -37,6 +48,7 @@ async def get_contacts(
     response_model=list[ContactResponse],
     response_description="Success",
     description="Get a list of contacts with birthdays for the next 7 days",
+    dependencies=[Depends(allowed_operation_get)],
 )
 async def get_upcoming_birthdays(
     db: AsyncSession = Depends(get_db),
@@ -48,7 +60,10 @@ async def get_upcoming_birthdays(
 
 # Get one contact by id.
 @router.get(
-    "/{contact_id}", response_model=ContactResponse, response_description="Success"
+    "/{contact_id}",
+    response_model=ContactResponse,
+    response_description="Success",
+    dependencies=[Depends(allowed_operation_get)],
 )
 async def get_contact_by_id(
     contact_id: int = Path(ge=1),
@@ -64,7 +79,12 @@ async def get_contact_by_id(
 
 
 # Search contacts by first name, last name, or email.
-@router.get("/", response_model=list[ContactResponse], response_description="Success")
+@router.get(
+    "/",
+    response_model=list[ContactResponse],
+    response_description="Success",
+    dependencies=[Depends(allowed_operation_get)],
+)
 async def get_contact_by_value(
     first_name: str | None = Query(default=None),
     last_name: str | None = Query(default=None),
@@ -86,6 +106,7 @@ async def get_contact_by_value(
     response_model=ContactResponse,
     response_description="Success",
     description="Update all contact fields",
+    dependencies=[Depends(allowed_operation_update)],
 )
 async def full_update_contact(
     body: ContactPutSchema,
@@ -107,6 +128,7 @@ async def full_update_contact(
     response_model=ContactResponse,
     response_description="Success",
     description="Update any field or fields",
+    dependencies=[Depends(allowed_operation_update)],
 )
 async def partial_update_contact(
     body: ContactUpdateSchema,
@@ -128,6 +150,7 @@ async def partial_update_contact(
     response_model=ContactResponse,
     response_description="Successfully created",
     status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(allowed_operation_create)],
 )
 async def create_contact(
     body: ContactSchema,
@@ -143,6 +166,7 @@ async def create_contact(
     "/{contact_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     response_description="Contact successfully deleted",
+    dependencies=[Depends(allowed_operation_delete)],
 )
 async def delete_contact(
     contact_id: int = Path(ge=1),
