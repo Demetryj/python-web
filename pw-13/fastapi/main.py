@@ -9,7 +9,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.db import get_db
-from src.routes import auth, contacts
+from src.routes import auth, contacts, users
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +38,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     
 
 app.include_router(auth.router, prefix="/api")
+app.include_router(users.router, prefix="/api")
 app.include_router(contacts.router, prefix="/api")
 
 

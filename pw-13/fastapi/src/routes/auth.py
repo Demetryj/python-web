@@ -3,7 +3,6 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer, OAuth2Pas
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.db import get_db
-from src.entity.models import User
 from src.services.auth import auth_service
 from src.schemas.users import UserResponse, UserShchema
 from src.schemas.auth import TokenSchema
@@ -57,12 +56,6 @@ async def login(
         "refresh_token": refresh_token,
         "token_type": "bearer",
     }
-
-
-@router.get("/me", response_model=UserResponse, response_description="Success")
-async def get_me(user: User = Depends(auth_service.get_current_user)) -> UserResponse:
-    """Return current authenticated user profile."""
-    return user
 
 
 @router.get(
