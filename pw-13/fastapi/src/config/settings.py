@@ -5,7 +5,7 @@ Docker Compose (`environment` / `env_file` on container level), not read
 directly from a local `.env` file inside Python code.
 """
 
-from pydantic import computed_field
+from pydantic import computed_field, EmailStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -25,20 +25,30 @@ class Settings(BaseSettings):
         env_file=None
     )
 
-    db_user: str
-    db_password: str
-    db_name: str
-    db_domain: str
-    db_port: int
+    # Properties (fields, attributes) can be in either lower or upper case.
+    # Each of them can have a default value..
+    psg_db_user: str
+    psg_db_password: str
+    psg_db_name: str
+    psg_db_domain: str
+    psg_db_port: int
+    
     secret_key: str
+    hash_algorithm: str = "HS256"
+    
+    MAIL_USERNAME: str
+    MAIL_PASSWORD: str
+    MAIL_FROM: EmailStr
+    MAIL_PORT: int = 2525
+    MAIL_SERVER: str = "sandbox.smtp.mailtrap.io"
+    
 
     @computed_field
     @property
     def DB_URL(self) -> str:
         return (
-            f"postgresql+asyncpg://{self.db_user}:{self.db_password}"
-            f"@{self.db_domain}:{self.db_port}/{self.db_name}"
+            f"postgresql+asyncpg://{self.psg_db_user}:{self.psg_db_password}"
+            f"@{self.psg_db_domain}:{self.psg_db_port}/{self.psg_db_name}"
         )
-
 
 settings = Settings()

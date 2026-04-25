@@ -8,15 +8,15 @@ services:
     container_name: postgres_server
     restart: always
     environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${PSG_DB_USER}
+      POSTGRES_PASSWORD: ${PSG_DB_PASSWORD}
+      POSTGRES_DB: ${PSG_DB_NAME}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      test: ["CMD-SHELL", "pg_isready -U ${PSG_DB_USER} -d ${PSG_DB_NAME}"]
       interval: 5s
       timeout: 3s
       retries: 20

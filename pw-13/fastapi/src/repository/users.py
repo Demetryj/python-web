@@ -34,3 +34,12 @@ async def create_user(body: UserShchema, db: AsyncSession) -> User:
     
     return new_user
 
+
+async def confirm_email(email: str, db: AsyncSession) -> None:
+    """Mark user as confirmed by email and persist changes."""
+    user: User | None = await get_user_by_email(email=email, db=db)
+    if user is None:
+        return
+    user.confirmed = True
+    await db.commit()
+    await db.refresh(user)

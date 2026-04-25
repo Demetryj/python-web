@@ -2,7 +2,7 @@ from datetime import date
 import enum 
 
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlalchemy import Enum, Integer, String, func, Column, DateTime, Date, ForeignKey
+from sqlalchemy import Enum, Boolean, Integer, String, func, Column, DateTime, Date, ForeignKey
 
 
 # SQLAlchemy base class for declarative models.
@@ -54,6 +54,7 @@ class User(Base, LastModifiedMixin):
     refresh_tokens: Mapped[list["RefreshToken"]] = relationship(
         backref="user", cascade="all, delete-orphan"
     )
+    confirmed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     
     
 # Separate table for refresh tokens: one user can sign in from multiple devices,
@@ -65,3 +66,4 @@ class RefreshToken(Base):
     rf_token: Mapped[str] = mapped_column(String(1024), nullable=False, unique=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
     
+

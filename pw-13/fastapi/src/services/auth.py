@@ -19,10 +19,13 @@ class AuthService:
 
     pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
     SECRET_KEY = settings.secret_key
-    ALGORITHM = "HS256"
+    ALGORITHM = settings.hash_algorithm
     oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/signin")
     access_token_expire_minutes = 15
     refresh_token_expire_days = 7
+    access_token_name = "access_token"
+    refresh_token_name = "refresh_token"
+    email_token_name = "email_token"
 
     # Verify plain password against hashed value.
     def verify_password(self, plain_password: str, hashed_password: str) -> bool:
@@ -62,7 +65,7 @@ class AuthService:
         """Return access token for user identity payload."""
         return self.create_token(
             payload=payload,
-            token_scope="access_token",
+            token_scope=self.access_token_name,
             expires_delta=timedelta(
                 minutes=(
                     expires_delta if expires_delta else self.access_token_expire_minutes
@@ -70,6 +73,19 @@ class AuthService:
             ),
         )
 
+    # Create token for email confirmation flow.
+    def create_email_token(
+        self, payload: dict[str, Any], expires_delta: Optional[int] = None
+    ) -> str:
+        """Return JWT token with `email_token` scope for email confirmation."""
+        return self.create_token(
+            payload=payload,
+            token_scope=self.email_token_name,
+            expires_delta=timedelta(
+                days=expires_delta if expires_delta else self.refresh_token_expire_days
+            ),
+        )
+    
     # Create longer-lived refresh token.
     def create_refresh_token(
         self, payload: dict[str, Any], expires_delta: Optional[float] = None
@@ -98,7 +114,7 @@ class AuthService:
         )
         try:
             payload = self.decode_token(refresh_token)
-            if payload.get("scope") != "refresh_token":
+            if payload.get("scope") != self.refresh_token_name :
                 raise credentials_exception
             email = payload.get("sub")
             if email is None:
@@ -119,7 +135,7 @@ class AuthService:
         )
         try:
             payload = self.decode_token(refresh_token)
-            if payload.get("scope") != "refresh_token":
+            if payload.get("scope") != self.refresh_token_name:
                 raise credentials_exception
 
             db_token = await repository_auth.get_refresh_token_by_token(
@@ -135,6 +151,28 @@ class AuthService:
             return email
         except JWTError:
             raise credentials_exception
+        
+    # Validate email-confirmation token and extract user's email from `sub`.
+    async def get_email_from_email_token(self, token: str) -> str:
+        """Return email from valid email-confirmation token or raise 401."""
+        credentials_exception = HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token for email verification",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+        try:
+            payload = self.decode_token(token)
+            if payload.get("scope") != self.email_token_name:
+                raise credentials_exception
+            email = payload.get("sub")
+            if email is None:
+                raise credentials_exception
+            return email
+        except JWTError:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Invalid token for email verification",
+            )
             
     # Resolve current user from valid access token.
     async def get_current_user(
@@ -152,7 +190,7 @@ class AuthService:
         try:
             # Decode JWT
             payload = self.decode_token(token)
-            if payload.get('scope') == 'access_token':
+            if payload.get('scope') == self.access_token_name:
                 email = payload.get('sub')
                 if email is None:
                     raise credentials_exception

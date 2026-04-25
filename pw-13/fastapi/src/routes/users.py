@@ -4,7 +4,6 @@ from src.entity.models import User
 from src.schemas.users import UserResponse
 from src.services.auth import auth_service
 
-
 router = APIRouter(prefix="/user", tags=["user"])
 
 
