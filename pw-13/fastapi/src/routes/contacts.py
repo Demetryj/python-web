@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Path, Query, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi_limiter.depends import RateLimiter
 
 from src.repository import contacts as repository_contacts
 from src.schemas.contacts import (
@@ -12,8 +13,15 @@ from src.database.db import get_db
 from src.entity.models import User, Role
 from src.services.auth import auth_service
 from src.services.role import RoleAccess
+from src.config.rate_limiters import contacts_base_limiter
 
-router = APIRouter(prefix="/contacts", tags=["contacts"])
+router = APIRouter(
+    prefix="/contacts",
+    tags=["contacts"],
+    # Apply rate limiting to all endpoints in this router: max 10 requests per 60 seconds.
+    dependencies=[Depends(RateLimiter(limiter=contacts_base_limiter))],
+)
+
 
 # Reusable RBAC dependency for read endpoints; allows admin/moderator/user roles.
 allowed_operation_get = RoleAccess([Role.admin, Role.moderator, Role.user])

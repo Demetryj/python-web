@@ -13,6 +13,7 @@ from fastapi.security import (
     OAuth2PasswordRequestForm,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi_limiter.depends import RateLimiter
 
 from src.database.db import get_db
 from src.services.auth import auth_service
@@ -20,8 +21,20 @@ from src.services.email import send_email
 from src.schemas.users import UserResponse, UserShchema
 from src.schemas.auth import TokenSchema, RequestEmail
 from src.repository import users as repository_users, auth as repository_auth
+from src.config.rate_limiters import (
+    auth_base_limiter,
+    auth_request_email_limiter,
+    auth_confirm_email_limiter,
+    auth_refresh_token_limiter,
+    auth_signup_limiter,
+)
 
-router = APIRouter(prefix="/auth", tags=["auth"])
+router = APIRouter(
+    prefix="/auth",
+    tags=["auth"],
+    # Base limit for all auth endpoints
+    dependencies=[Depends(RateLimiter(limiter=auth_base_limiter))],
+)
 
 get_refresh_token = HTTPBearer()
 
@@ -31,6 +44,8 @@ get_refresh_token = HTTPBearer()
     response_model=UserResponse,
     status_code=status.HTTP_201_CREATED,
     response_description="Successfully created",
+    # Stricter anti-bruteforce limit
+    dependencies=[Depends(RateLimiter(limiter=auth_signup_limiter))],
 )
 async def register(
     body: UserShchema,
@@ -90,7 +105,10 @@ async def login(
 
 
 @router.get(
-    "/refresh-token", response_model=TokenSchema, response_description="Success"
+    "/refresh-token",
+    response_model=TokenSchema,
+    response_description="Success",
+    dependencies=[Depends(RateLimiter(limiter=auth_refresh_token_limiter))],
 )
 # Rotate refresh token and issue a new access/refresh pair.
 async def refresh_token(
@@ -156,7 +174,9 @@ async def logout(
 
 
 @router.get(
-    "/confirm-email/{token}", response_description="Successful email verification"
+    "/confirm-email/{token}",
+    response_description="Successful email verification",
+    dependencies=[Depends(RateLimiter(limiter=auth_confirm_email_limiter))],
 )
 async def confirm_email(
     token: str,
@@ -178,7 +198,11 @@ async def confirm_email(
     return {"message": "Email confirmed"}
 
 
-@router.post("/request-email", response_description="Success")
+@router.post(
+    "/request-email",
+    response_description="Success",
+    dependencies=[Depends(RateLimiter(limiter=auth_request_email_limiter))],
+)
 async def request_email(
     body: RequestEmail,
     background_tasks: BackgroundTasks,
