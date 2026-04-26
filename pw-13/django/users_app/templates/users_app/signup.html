@@ -1,0 +1,33 @@
+{% extends "users_app/base.html" %} {% block content %}
+
+<h2 style="text-align: center">Sign Up</h2>
+
+<a
+  href="{% url 'quotes_app:main' %}"
+  style="text-decoration: none"
+  class="back-link"
+  >&larr; Home</a
+>
+
+<form method="post" action="{% url 'users_app:signup' %}" class="auth-form">
+  {% csrf_token %}
+  <div>
+    <label> Username: {{ form.username }} </label>
+    <span>{{ form.errors.username }}</span>
+  </div>
+  <br />
+  <div>
+    <label> Password: {{ form.password1 }} </label>
+    <span>{{ form.errors.password1 }}</span>
+  </div>
+  <div>
+    <label> Password confirmation: {{ form.password2 }} </label>
+    <span>{{ form.errors.password2 }}</span>
+  </div>
+  <div class="mt-4">
+    <button type="submit" class="btn btn-primary">Submit</button>
+    <button type="reset" class="btn btn-secondary">Reset</button>
+  </div>
+</form>
+
+{% endblock %}

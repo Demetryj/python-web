@@ -1,0 +1,30 @@
+{% extends "quotes_app/base.html" %} {% block content %}
+
+<a
+  href="{% url 'quotes_app:main' %}"
+  style="text-decoration: none"
+  class="back-link"
+  >&larr; Home</a
+>
+
+<form method="POST" action="{% url 'quotes_app:add_quote' %}">
+  {% csrf_token %}
+  <div style="padding: 10px" class="form">
+    <label>Enter quote text:* {{ form.quote }} </label>
+    <span class="error-text">{{ form.errors.quote }}</span>
+
+    <label>Select author:* {{ form.author }} </label>
+    <span class="error-text">{{ form.errors.author }}</span>
+
+    <div style="padding: 10px">
+      <label>Select tags: {{ form.tags }} </label>
+      <span class="error-text">{{ form.errors.tags }}</span>
+    </div>
+  </div>
+  <div class="py-3">
+    <button type="submit" class="btn btn-primary">Submit</button>
+    <button type="reset" class="btn btn-light">Reset</button>
+  </div>
+</form>
+
+{% endblock %}

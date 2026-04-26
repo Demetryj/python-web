@@ -1,0 +1,54 @@
+"""Views for authentication flows in users_app.
+
+Includes handlers for:
+- user registration
+- user login
+- user logout
+"""
+
+from django.shortcuts import render, redirect
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+
+from .forms import RegisterForm, LoginForm
+
+
+def signup_user(request):
+    """Handle user registration and render the sign-up page."""
+    if request.user.is_authenticated:
+        return redirect(to='quotes_app:main')
+
+    if request.method == 'POST':
+        form = RegisterForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect(to='users_app:login')
+        else:
+            return render(request, 'users_app/signup.html', context={"form": form})
+
+    return render(request, 'users_app/signup.html', context={"form": RegisterForm()})
+
+
+def login_user(request):
+    """Authenticate user credentials and render the login page."""
+    if request.user.is_authenticated:
+        return redirect(to='quotes_app:main')
+
+    if request.method == 'POST':
+        user = authenticate(username=request.POST['username'], password=request.POST['password'])
+        if user is None:
+            messages.error(request, 'Username or password didn\'t match')
+            return redirect(to='users_app:login')
+
+        login(request, user)
+        return redirect(to='quotes_app:main')
+
+    return render(request, 'users_app/login.html', context={"form": LoginForm()})
+
+
+@login_required
+def logout_user(request):
+    """Log out the current user and redirect to the main page."""
+    logout(request)
+    return redirect(to='quotes_app:main')
