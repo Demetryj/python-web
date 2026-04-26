@@ -11,27 +11,50 @@ from django.contrib.auth.models import User
 
 
 class RegisterForm(UserCreationForm):
-    username = forms.CharField(max_length=100, required=True, widget=forms.TextInput(attrs={"class": "form-control auth-input"}))
+    username = forms.CharField(
+        max_length=100,
+        required=True,
+        widget=forms.TextInput(attrs={"class": "form-control auth-input"}),
+    )
+
+    email = forms.CharField(
+        max_length=100,
+        required=True,
+        widget=forms.TextInput(attrs={"class": "form-control auth-input"}),
+    )
 
     password1 = forms.CharField(
-        min_length=6, max_length=20, required=True, widget=forms.PasswordInput(attrs={"class": "form-control auth-input"})
+        min_length=6,
+        max_length=20,
+        required=True,
+        widget=forms.PasswordInput(attrs={"class": "form-control auth-input"}),
     )
     password2 = forms.CharField(
-         min_length=6, max_length=20, required=True, widget=forms.PasswordInput(attrs={"class": "form-control auth-input"})
+        min_length=6,
+        max_length=20,
+        required=True,
+        widget=forms.PasswordInput(attrs={"class": "form-control auth-input"}),
     )
 
     class Meta:
         model = User
-        fields = ["username", "password1", "password2"]
+        fields = ["username", "email", "password1", "password2"]
 
 
 class LoginForm(AuthenticationForm):
-    username = forms.CharField(max_length=100, required=True, widget=forms.TextInput(attrs={"class": "form-control auth-input"}))
+    username = forms.CharField(
+        max_length=100,
+        required=True,
+        widget=forms.TextInput(attrs={"class": "form-control auth-input"}),
+    )
 
     password = forms.CharField(
-        min_length=6, max_length=20, required=True, widget=forms.PasswordInput(attrs={"class": "form-control auth-input"})
+        min_length=6,
+        max_length=20,
+        required=True,
+        widget=forms.PasswordInput(attrs={"class": "form-control auth-input"}),
     )
 
     class Meta:
         model = User
-        fields = ['username', 'password']
+        fields = ["username", "password"]

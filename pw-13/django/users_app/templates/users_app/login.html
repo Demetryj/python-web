@@ -25,6 +25,10 @@
     <button type="reset" class="btn btn-secondary">Reset</button>
   </div>
 
+  <div class="small text-center">
+        <a href="{% url "users_app:password_reset" %}" class="text-center"><i>Forgot Password?</i></a>
+  </div>
+
   {% if messages %}
   <div class="mb-3">
     {% for message in messages %}
