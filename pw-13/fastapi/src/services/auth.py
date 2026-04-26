@@ -174,13 +174,13 @@ class AuthService:
                 detail="Invalid token for email verification",
             )
             
-    # Resolve current user from valid access token.
+    # Validate access token, authorize request, and resolve current user.
     async def get_current_user(
         self,
         token: str = Depends(oauth2_scheme),
         db: AsyncSession = Depends(get_db),
     ) -> User:
-        """Return current authenticated user from access token."""
+        """Authorize request by access token and return the current user."""
         credentials_exception = HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",

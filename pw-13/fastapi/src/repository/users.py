@@ -43,3 +43,18 @@ async def confirm_email(email: str, db: AsyncSession) -> None:
     user.confirmed = True
     await db.commit()
     await db.refresh(user)
+
+
+async def update_avatar_url(
+    email: str,
+    avatar_url: str,
+    db: AsyncSession,
+) -> User | None:
+    """Update user's avatar URL and return updated user, or None if not found."""
+    user = await get_user_by_email(email=email, db=db)
+    if user is None:
+        return None
+    user.avatar = avatar_url
+    await db.commit()
+    await db.refresh(user)
+    return user

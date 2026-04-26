@@ -44,6 +44,10 @@ class Settings(BaseSettings):
     REDIS_PORT: int = 6379
     REDIS_DB: int = 0
     REDIS_PASSWORD: str | None = None
+    
+    CLOUDINARY_NAME: str
+    CLOUDINARY_API_KEY: int
+    CLOUDINARY_API_SECRET: str
 
     @computed_field
     @property

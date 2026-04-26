@@ -24,6 +24,7 @@ dependencies = [
     "fastapi-mail (>=1.6.2,<2.0.0)",
     "redis (>=7.4.0,<8.0.0)",
     "fastapi-limiter (>=0.2.0,<0.3.0)",
+    "cloudinary (>=1.44.2,<2.0.0)",
     
 ]
 

@@ -14,7 +14,7 @@ redis_client = Redis(
 
 
 def make_limiter(rate: Rate, bucket: str) -> Limiter:
-    """Create a Redis-backed limiter for a specific rate and bucket namespace."""
+    """Create Limiter instance backed by Redis bucket."""
     redis_bucket = RedisBucket.init([rate], redis_client, bucket)
     return Limiter(redis_bucket)
 
@@ -25,7 +25,7 @@ auth_base_limiter = make_limiter(Rate(60, Duration.MINUTE), "auth_base")
 
 # stricter per route
 auth_signup_limiter = make_limiter(Rate(40, Duration.MINUTE), "auth_signup")
-auth_refresh_token_limiter = make_limiter(Rate(10, Duration.MINUTE), "auth_refresh_token")
+auth_refresh_token_limiter = make_limiter(Rate(50, Duration.MINUTE), "auth_refresh_token")
 auth_confirm_email_limiter = make_limiter(Rate(10, Duration.MINUTE), "auth_confirm_email")
 auth_request_email_limiter = make_limiter(
     Rate(3, Duration.MINUTE * 5), "auth_request_email"
@@ -38,3 +38,4 @@ contacts_base_limiter = make_limiter(Rate(10, Duration.MINUTE), "contacts_base")
 # USER
 # users routes -  base
 users_base_limiter = make_limiter(Rate(10, Duration.MINUTE), "users_base")
+user_update_avatar_limiter = make_limiter(Rate(1,  Duration.SECOND * 30), "user_update_avatar")
