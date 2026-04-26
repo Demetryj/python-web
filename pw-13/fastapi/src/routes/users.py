@@ -60,10 +60,5 @@ async def update_avatar(
         width=250, height=250, crop="fill", version=res.get("version")
     )
 
-    updated_user = await repository_users.update_avatar_url(user.email, res_url, db)
-    if updated_user is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found",
-        )
-    return updated_user
+    user = await repository_users.update_avatar_url(user.email, res_url, db)
+    return user
