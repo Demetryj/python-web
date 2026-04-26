@@ -26,25 +26,29 @@ config = ConnectionConfig(
 )
 
 
-async def send_email(email: EmailStr, username: str, host: str) -> None:
-    """Send a verification email with an email-confirmation JWT token."""
+# Reusable sender for email verification and password reset messages.
+async def send_email(
+    email: EmailStr,
+    username: str,
+    host: str,
+    token: str,
+    subject: str,
+    template_name: str,
+) -> None:
+    """Send an HTML email using the provided subject, template, and token."""
     try:
-        verification_token = auth_service.create_email_token({"sub": email})
-
         message = MessageSchema(
-            subject="Confirm your email",
+            subject=subject,
             recipients=[email],
             template_body={
                 "host": host,
                 "username": username,
-                "token": verification_token,
+                "token": token,
             },
             subtype=MessageType.html,
         )
 
         smtp_server = FastMail(config)
-        await smtp_server.send_message(
-            message=message, template_name="verify_email.html"
-        )
+        await smtp_server.send_message(message=message, template_name=template_name)
     except ConnectionErrors as err:
         logger.exception(err)

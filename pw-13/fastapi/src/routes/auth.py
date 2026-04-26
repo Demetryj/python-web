@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 from fastapi import (
     APIRouter,
     BackgroundTasks,
@@ -19,7 +21,7 @@ from src.database.db import get_db
 from src.services.auth import auth_service
 from src.services.email import send_email
 from src.schemas.users import UserResponse, UserShchema
-from src.schemas.auth import TokenSchema, RequestEmail
+from src.schemas.auth import TokenSchema, RequestEmail, ResetPasswordSchema
 from src.repository import users as repository_users, auth as repository_auth
 from src.config.rate_limiters import (
     auth_base_limiter,
@@ -27,7 +29,13 @@ from src.config.rate_limiters import (
     auth_confirm_email_limiter,
     auth_refresh_token_limiter,
     auth_signup_limiter,
+    auth_reset_password_limiter,
 )
+
+EMAIL_VERIFY_TITLE = "Confirm your email"
+EMAIL_VERIFY_TEMPLATE = "verify_email.html"
+RESET_PASSWORD_TITLE = "Reset your password"
+RESET_PASSWORD_TEMPLATE = "reset_password.html"
 
 router = APIRouter(
     prefix="/auth",
@@ -62,11 +70,16 @@ async def register(
     body.password = auth_service.get_password_hash(body.password)
     new_user = await repository_users.create_user(body=body, db=db)
 
+    verification_token = auth_service.create_email_token({"sub": new_user.email})
+
     background_tasks.add_task(
         send_email,
         email=new_user.email,
         username=new_user.username,
         host=request.base_url,
+        token=verification_token,
+        subject=EMAIL_VERIFY_TITLE,
+        template_name=EMAIL_VERIFY_TEMPLATE,
     )
     return new_user
 
@@ -208,13 +221,107 @@ async def request_email(
     background_tasks: BackgroundTasks,
     request: Request,
     db: AsyncSession = Depends(get_db),
-):
+) -> dict[str, str]:
+    """Resend email confirmation link for an unconfirmed user account."""
     user = await repository_users.get_user_by_email(email=body.email, db=db)
 
     if user.confirmed:
         return {"message": "Your email is already confirmed"}
     if user:
+        verification_token = auth_service.create_email_token({"sub": user.email})
+
         background_tasks.add_task(
-            send_email, email=user.email, username=user.username, host=request.base_url
+            send_email,
+            email=user.email,
+            username=user.username,
+            host=request.base_url,
+            token=verification_token,
+            subject=EMAIL_VERIFY_TITLE,
+            template_name=EMAIL_VERIFY_TEMPLATE,
         )
     return {"message": "Check your email for confirmation."}
+
+
+@router.post(
+    "/password-reset/request",
+    description="The route for sending the email address to which the email to confirm the password reset will be sent",
+    dependencies=[Depends(RateLimiter(limiter=auth_reset_password_limiter))],
+)
+async def password_reset_request(
+    body: RequestEmail,
+    background_tasks: BackgroundTasks,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, str]:
+    """Request password reset email for an existing account."""
+    # Look up the account by email, but keep the response generic either way.
+    user = await repository_users.get_user_by_email(email=body.email, db=db)
+    if user:
+        # Create a short-lived JWT reset token and persist its stable hash.
+        token = auth_service.create_password_reset_token({"sub": user.email})
+        token_hash = auth_service.get_token_hash(token)
+
+        # Copy scalar user fields before commit expires ORM attributes in async session.
+        user_email = user.email
+        username = user.username
+        user_id = user.id
+
+        await repository_auth.add_password_reset_token(
+            user_id=user_id,
+            token_hash=token_hash,
+            expires_at=datetime.now()
+            + timedelta(minutes=auth_service.password_reset_token_minutes),
+            db=db,
+        )
+
+        # Send reset instructions in the background so the API responds quickly.
+        background_tasks.add_task(
+            send_email,
+            email=user_email,
+            username=username,
+            host=request.base_url,
+            token=token,
+            subject=RESET_PASSWORD_TITLE,
+            template_name=RESET_PASSWORD_TEMPLATE,
+        )
+    return {"message": "If this email exists, password reset instructions were sent."}
+
+
+@router.get(
+    "/password-reset/verify/{token}",
+    response_description="Success",
+    dependencies=[Depends(RateLimiter(limiter=auth_reset_password_limiter))],
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def reset_password(token: str, db: AsyncSession = Depends(get_db)) -> None:
+    """Validate password reset token and allow frontend to open reset form."""
+    await auth_service.validate_password_reset_token(token=token, db=db)
+    # return Response(status_code=status.HTTP_204_NO_CONTENT)
+    return {"message": "Succes. You can create a new password.", }
+
+
+@router.patch(
+    "/password-reset/confirm",
+    dependencies=[Depends(RateLimiter(limiter=auth_reset_password_limiter))],
+)
+async def password_reset_confirm(
+    body: ResetPasswordSchema, db: AsyncSession = Depends(get_db)
+) -> None:
+    """Set a new password for user after successful password reset token validation."""
+    email = await auth_service.validate_password_reset_token(token=body.token, db=db)
+
+    updated_user = await repository_users.update_user_password(
+        email=email,
+        hashed_password=auth_service.get_password_hash(body.password),
+        db=db,
+    )
+    if updated_user is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired password reset token",
+        )
+
+    token_hash = auth_service.get_token_hash(body.token)
+    await repository_auth.update_used_status_password_reset_token(token_hash, db=db)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+

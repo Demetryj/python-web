@@ -30,6 +30,7 @@ auth_confirm_email_limiter = make_limiter(Rate(10, Duration.MINUTE), "auth_confi
 auth_request_email_limiter = make_limiter(
     Rate(3, Duration.MINUTE * 5), "auth_request_email"
 )
+auth_reset_password_limiter = make_limiter(Rate(5, Duration.MINUTE * 60 * 12), "auth_reset_password")
 
 # CONTACTS
 # contacts routes - base

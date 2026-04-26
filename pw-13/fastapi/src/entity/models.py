@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 import enum 
 
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
@@ -66,4 +66,19 @@ class RefreshToken(Base):
     rf_token: Mapped[str] = mapped_column(String(1024), nullable=False, unique=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
     
+
+# Stores password reset JWT hashes and usage state to make reset links one-time.
+class PasswordResetToken(Base, LastModifiedMixin):
+    """One-time password reset token bound to a user and expiration time."""
+
+    __tablename__ = "password_reset_tokens"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    token_hash: Mapped[str] = mapped_column(String(1024), nullable=False, unique=True, index=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    used_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, default=None)
+
+    user: Mapped["User"] = relationship("User", backref="password_reset_tokens")
+
 

@@ -1,3 +1,4 @@
+import hashlib
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
@@ -23,9 +24,11 @@ class AuthService:
     oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/signin")
     access_token_expire_minutes = 15
     refresh_token_expire_days = 7
+    password_reset_token_minutes = 15
     access_token_name = "access_token"
     refresh_token_name = "refresh_token"
     email_token_name = "email_token"
+    password_reset_token = "password_reset_token"
 
     # Verify plain password against hashed value.
     def verify_password(self, plain_password: str, hashed_password: str) -> bool:
@@ -36,6 +39,11 @@ class AuthService:
     def get_password_hash(self, plain_password: str) -> str:
         """Return bcrypt hash for the provided plain password."""
         return self.pwd_context.hash(plain_password)
+    
+    # Build stable hash for storing and looking up password reset tokens.
+    def get_token_hash(self, token: str) -> str:
+        """Return deterministic SHA-256 hash for the provided password reset token."""
+        return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
     # Create signed JWT token with scope and expiration claims.
     def create_token(
@@ -83,6 +91,19 @@ class AuthService:
             token_scope=self.email_token_name,
             expires_delta=timedelta(
                 days=expires_delta if expires_delta else self.refresh_token_expire_days
+            ),
+        )
+        
+    # Create short-lived token for password reset flow.
+    def create_password_reset_token(
+        self, payload: dict[str, Any], expires_delta: Optional[int] = None
+    ) -> str:
+        """Return JWT token with `password_reset_token` scope for password reset."""
+        return self.create_token(
+            payload=payload,
+            token_scope=self.password_reset_token,
+            expires_delta=timedelta(
+                minutes=expires_delta if expires_delta else self.password_reset_token_minutes
             ),
         )
     
@@ -174,6 +195,60 @@ class AuthService:
                 detail="Invalid token for email verification",
             )
             
+    # Validate password reset token and extract user's email from `sub`.
+    async def get_email_from_password_reset_token(self, token: str) -> str:
+        """Return email from valid password reset token or raise 400."""
+        credentials_exception = HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired password reset token",
+        )
+
+        try:
+            payload = self.decode_token(token)
+            if payload.get("scope") != self.password_reset_token:
+                raise credentials_exception
+
+            email = payload.get("sub")
+            if email is None:
+                raise credentials_exception
+            return email
+        except JWTError:
+            raise credentials_exception
+
+    # Validate password reset token against JWT claims and stored DB state.
+    async def validate_password_reset_token(
+        self, token: str, db: AsyncSession
+    ) -> str:
+        """Return email from valid password reset token or raise 400."""
+        credentials_exception = HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired password reset token",
+        )
+
+        # Validate JWT signature, expiration, and password-reset scope.
+        email = await self.get_email_from_password_reset_token(token)
+
+        # Look up the stored reset token row by deterministic token hash.
+        token_hash = self.get_token_hash(token)
+        db_token_obj = await repository_auth.get_password_reset_token(
+            token_hash=token_hash,
+            db=db,
+        )
+
+        # Reject tokens that were never issued by this application.
+        if db_token_obj is None:
+            raise credentials_exception
+
+        # Reject replay attempts for already used password reset links.
+        if db_token_obj.used_at is not None:
+            raise credentials_exception
+
+        # Reject tokens whose DB expiration timestamp has already passed.
+        if db_token_obj.expires_at <= datetime.now():
+            raise credentials_exception
+
+        return email
+             
     # Validate access token, authorize request, and resolve current user.
     async def get_current_user(
         self,

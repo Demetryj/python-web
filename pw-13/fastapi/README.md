@@ -8,6 +8,7 @@ JWT authentication, email verification, rate limiting, and Docker Compose.
 - User signup and login (`JWT` access + refresh tokens)
 - Email verification after signup
 - Resend email verification link
+- Password reset by email with one-time token validation
 - Refresh token rotation
 - Logout (refresh token revocation)
 - User profile endpoint
@@ -122,6 +123,9 @@ Base prefix: `/api/auth`
 - `POST /signup` - create a new user account
 - `GET /confirm-email/{token}` - confirm user email by verification token
 - `POST /request-email` - resend email verification link
+- `POST /password-reset/request` - request password reset email
+- `GET /password-reset/verify/{token}` - validate password reset token before showing reset form
+- `PATCH /password-reset/confirm` - set a new password using valid reset token
 - `POST /signin` - login by username(email) + password, returns `access_token` and `refresh_token`
 - `GET /refresh-token` - rotate refresh token and issue a new token pair (requires refresh token in `Authorization: Bearer ...`)
 - `POST /logout` - revoke provided refresh token (requires refresh token in `Authorization: Bearer ...`)
@@ -163,6 +167,12 @@ All `/api/contacts/*` routes require `Authorization: Bearer <access_token>`.
 
 If verification email is lost, call `POST /api/auth/request-email` with user email.
 
+Password reset flow:
+
+1. `POST /api/auth/password-reset/request` - create a short-lived reset token, store its hash in DB, and send reset email.
+2. `GET /api/auth/password-reset/verify/{token}` - validate JWT claims and DB token state before frontend opens reset form.
+3. `PATCH /api/auth/password-reset/confirm` - update password and mark reset token as used.
+
 ## Email Verification
 
 Email verification is implemented with `fastapi-mail`, Mailtrap SMTP, and a
@@ -173,6 +183,24 @@ short-lived JWT email token.
 - `AuthService.create_email_token()` creates a token with `email_token` scope.
 - `GET /api/auth/confirm-email/{token}` validates the token and marks `User.confirmed = True`.
 - Unconfirmed users cannot sign in.
+
+## Password Reset
+
+Password reset is implemented with JWT reset tokens plus DB-backed one-time use state.
+
+- `AuthService.create_password_reset_token()` creates a short-lived JWT with `password_reset_token` scope.
+- `AuthService.get_token_hash()` stores a deterministic SHA-256 hash of the raw token for DB lookup.
+- `AuthService.validate_password_reset_token()` validates JWT claims and checks DB state (`exists`, `used_at is None`, `expires_at > now`).
+- `repository_auth.add_password_reset_token()` creates or rotates a single reset token row per user.
+- `repository_auth.update_used_status_password_reset_token()` marks token as used after successful password change.
+- `repository_users.update_user_password()` writes the new hashed password to the user row.
+- `src/services/templates/reset_password.html` contains the reset email template.
+
+Security notes:
+
+- The API returns a generic response from `POST /password-reset/request` even if the email does not exist.
+- Reset tokens are validated twice: once before opening the reset form and again before saving the new password.
+- A reset token becomes unusable after successful password change because `used_at` is set.
 
 ## Rate Limiting
 
@@ -186,6 +214,7 @@ Current limits:
 - Refresh token: `50/min`
 - Confirm email: `10/min`
 - Request verification email: `3/5 min`
+- Password reset flow: `5/12 hours`
 - Contacts base: `10/min`
 - User base: `10/min`
 - Avatar update: `1/30 sec`
@@ -265,5 +294,6 @@ pw-13/fastapi/
     services/auth.py
     services/email.py
     services/templates/verify_email.html
+    services/templates/reset_password.html
     migrations/
 ```

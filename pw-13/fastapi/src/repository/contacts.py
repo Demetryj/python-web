@@ -13,19 +13,19 @@ from src.schemas.contacts import (
 # All contact queries in this module are user-scoped:
 # each user can access and manage only their own contacts.
 
-async def get_contacts(limit: int, offset: int, db: AsyncSession, user: User) -> list[Contact]:
+
+async def get_contacts(
+    limit: int, offset: int, db: AsyncSession, user: User
+) -> list[Contact]:
     """Return a paginated list of contacts."""
-    stmt = (
-        select(Contact)
-        .where(Contact.user_id == user.id)
-        .offset(offset)
-        .limit(limit)
-    )
+    stmt = select(Contact).where(Contact.user_id == user.id).offset(offset).limit(limit)
     result = await db.execute(stmt)
     return result.scalars().all()
 
 
-async def get_contact_by_id(contact_id: int, db: AsyncSession, user: User) -> Contact | None:
+async def get_contact_by_id(
+    contact_id: int, db: AsyncSession, user: User
+) -> Contact | None:
     """Return one contact by id or None if not found."""
     stmt = select(Contact).where(
         and_(Contact.id == contact_id, Contact.user_id == user.id)
@@ -36,7 +36,8 @@ async def get_contact_by_id(contact_id: int, db: AsyncSession, user: User) -> Co
 
 
 async def get_contact_by_value(
-    db: AsyncSession, user: User,
+    db: AsyncSession,
+    user: User,
     first_name: str | None = None,
     last_name: str | None = None,
     email: str | None = None,
@@ -46,7 +47,9 @@ async def get_contact_by_value(
 
     if first_name:
         stmt = select(Contact).where(
-            and_(Contact.user_id == user.id, Contact.first_name.ilike(f"%{first_name}%"))
+            and_(
+                Contact.user_id == user.id, Contact.first_name.ilike(f"%{first_name}%")
+            )
         )
     elif last_name:
         stmt = select(Contact).where(
@@ -65,7 +68,9 @@ async def get_contact_by_value(
 
 async def create_contact(body: ContactSchema, db: AsyncSession, user: User) -> Contact:
     """Create a new contact and return it."""
-    contact = Contact(**body.model_dump(exclude_unset=True), user=user) # (first_name=body.first_name, email=body.email)
+    contact = Contact(
+        **body.model_dump(exclude_unset=True), user=user
+    )  # (first_name=body.first_name, email=body.email)
     db.add(contact)
     await db.commit()
     await db.refresh(contact)
@@ -83,7 +88,7 @@ async def update_contact(
     contact = result.scalar_one_or_none()
 
     if contact:
-        for key, value in body.model_dump(exclude_unset=True).items(): 
+        for key, value in body.model_dump(exclude_unset=True).items():
             setattr(contact, key, value)
         await db.commit()
         await db.refresh(contact)
@@ -110,7 +115,9 @@ async def full_update_contact(
     return contact
 
 
-async def delete_contact(contact_id: int, db: AsyncSession, user: User) -> Contact | None:
+async def delete_contact(
+    contact_id: int, db: AsyncSession, user: User
+) -> Contact | None:
     """Delete a contact by id and return the deleted object."""
     stmt = select(Contact).filter_by(id == contact_id, user=user)
     result = await db.execute(stmt)

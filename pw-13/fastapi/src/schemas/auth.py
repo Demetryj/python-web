@@ -9,3 +9,8 @@ class TokenSchema(BaseModel):
     
 class RequestEmail(BaseModel):
     email: EmailStr
+    
+
+class ResetPasswordSchema(BaseModel):
+    token: str
+    password: str
