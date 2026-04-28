@@ -1,0 +1,16 @@
+from pydantic import BaseModel, EmailStr
+
+
+class TokenSchema(BaseModel):
+    access_token: str
+    refresh_token: str
+    token_type: str = "bearer"
+    
+    
+class RequestEmail(BaseModel):
+    email: EmailStr
+    
+
+class ResetPasswordSchema(BaseModel):
+    token: str
+    password: str

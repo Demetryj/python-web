@@ -1,0 +1,75 @@
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from libgravatar import Gravatar
+import logging
+
+from src.entity.models import User, PasswordResetToken
+from src.schemas.users import UserShchema
+from src.schemas.auth import ResetPasswordSchema
+
+logger = logging.getLogger(__name__)
+
+
+async def get_user_by_email(email: str, db: AsyncSession) -> User | None:
+    """Return a user by email, or None when no user exists."""
+    stmt = select(User).filter_by(email=email)
+    user = await db.execute(stmt)
+    return user.scalar_one_or_none()
+
+
+async def create_user(body: UserShchema, db: AsyncSession) -> User:
+    """Create a new user and try to enrich profile with a Gravatar URL."""
+    avatar = None
+    try:
+        g = Gravatar(body.email)
+        avatar = g.get_image()
+    except Exception as err:
+        logger.warning("Failed to fetch Gravatar for %s: %s", body.email, err)
+
+    user_data = body.model_dump(include={"username", "email", "password"})
+    new_user = User(**user_data, avatar=avatar)
+    db.add(new_user)
+    await db.commit()
+    await db.refresh(new_user)
+
+    return new_user
+
+
+async def confirm_email(email: str, db: AsyncSession) -> None:
+    """Mark user as confirmed by email and persist changes."""
+    user: User | None = await get_user_by_email(email=email, db=db)
+    if user is None:
+        return
+    user.confirmed = True
+    await db.commit()
+    await db.refresh(user)
+
+
+async def update_avatar_url(
+    email: str,
+    avatar_url: str,
+    db: AsyncSession,
+) -> User | None:
+    """Update user's avatar URL and return updated user, or None if not found."""
+    user = await get_user_by_email(email=email, db=db)
+    if user is None:
+        return None
+    user.avatar = avatar_url
+    await db.commit()
+    await db.refresh(user)
+    return user
+
+
+async def update_user_password(
+    email: str,
+    hashed_password: str,
+    db: AsyncSession,
+) -> User | None:
+    """Update user's password hash and return updated user, or None if not found."""
+    user = await get_user_by_email(email=email, db=db)
+    if user is None:
+        return None
+    user.password = hashed_password
+    await db.commit()
+    await db.refresh(user)
+    return user
