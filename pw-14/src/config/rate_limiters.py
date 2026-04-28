@@ -14,7 +14,15 @@ redis_client = Redis(
 
 
 def make_limiter(rate: Rate, bucket: str) -> Limiter:
-    """Create Limiter instance backed by Redis bucket."""
+    """Create a Redis-backed rate limiter.
+
+    :param rate: Allowed request rate.
+    :type rate: Rate
+    :param bucket: Redis bucket name for this limiter.
+    :type bucket: str
+    :return: Configured limiter instance.
+    :rtype: Limiter
+    """
     redis_bucket = RedisBucket.init([rate], redis_client, bucket)
     return Limiter(redis_bucket)
 

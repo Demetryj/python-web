@@ -1,3 +1,5 @@
+"""Authentication and account recovery routes."""
+
 from datetime import datetime, timedelta
 
 from fastapi import (
@@ -61,7 +63,20 @@ async def register(
     request: Request,
     db: AsyncSession = Depends(get_db),
 ) -> UserResponse:
-    """Register a new user account and return created user data."""
+    """Register a new user account.
+
+    :param body: User registration payload.
+    :type body: UserShchema
+    :param background_tasks: FastAPI background task manager.
+    :type background_tasks: BackgroundTasks
+    :param request: Incoming request used to build email links.
+    :type request: Request
+    :param db: SQLAlchemy asynchronous database session.
+    :type db: AsyncSession
+    :raises HTTPException: Raises ``409 Conflict`` when the account exists.
+    :return: Created user data.
+    :rtype: UserResponse
+    """
     user = await repository_users.get_user_by_email(email=body.email, db=db)
     if user:
         raise HTTPException(
@@ -88,7 +103,17 @@ async def register(
 async def login(
     body: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)
 ):
-    """Authenticate user credentials and return access/refresh tokens."""
+    """Authenticate a user and return access and refresh tokens.
+
+    :param body: OAuth2 password form with username and password.
+    :type body: OAuth2PasswordRequestForm
+    :param db: SQLAlchemy asynchronous database session.
+    :type db: AsyncSession
+    :raises HTTPException: Raises ``401 Unauthorized`` for invalid credentials
+        or an unconfirmed email.
+    :return: Token response payload.
+    :rtype: dict[str, str]
+    """
     user = await repository_users.get_user_by_email(email=body.username, db=db)
     if user is None:
         raise HTTPException(
@@ -128,7 +153,17 @@ async def refresh_token(
     credentials: HTTPAuthorizationCredentials = Depends(get_refresh_token),
     db: AsyncSession = Depends(get_db),
 ) -> TokenSchema:
-    """Validate refresh token, rotate it, and return a fresh token pair."""
+    """Validate and rotate a refresh token.
+
+    :param credentials: HTTP bearer credentials containing the refresh token.
+    :type credentials: HTTPAuthorizationCredentials
+    :param db: SQLAlchemy asynchronous database session.
+    :type db: AsyncSession
+    :raises HTTPException: Raises ``401 Unauthorized`` when the token cannot be
+        validated.
+    :return: Fresh access and refresh token pair.
+    :rtype: TokenSchema
+    """
     # We intentionally return one generic 401 message for all auth failures
     # to avoid exposing which validation step failed.
     credentials_exception = HTTPException(
@@ -180,7 +215,15 @@ async def logout(
     credentials: HTTPAuthorizationCredentials = Depends(get_refresh_token),
     db: AsyncSession = Depends(get_db),
 ) -> Response:
-    """Revoke refresh token so it cannot be used for further refresh requests."""
+    """Revoke a refresh token.
+
+    :param credentials: HTTP bearer credentials containing the refresh token.
+    :type credentials: HTTPAuthorizationCredentials
+    :param db: SQLAlchemy asynchronous database session.
+    :type db: AsyncSession
+    :return: Empty ``204 No Content`` response.
+    :rtype: Response
+    """
     token = credentials.credentials
     await repository_auth.delete_refresh_token_by_token(token=token, db=db)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
@@ -195,7 +238,16 @@ async def confirm_email(
     token: str,
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, str]:
-    """Confirm user's email by verification token and return status message."""
+    """Confirm a user email address.
+
+    :param token: Email confirmation token.
+    :type token: str
+    :param db: SQLAlchemy asynchronous database session.
+    :type db: AsyncSession
+    :raises HTTPException: Raises ``400 Bad Request`` when verification fails.
+    :return: Confirmation status message.
+    :rtype: dict[str, str]
+    """
     email = auth_service.get_email_from_email_token(token=token)
     user = await repository_users.get_user_by_email(email=email, db=db)
 
@@ -222,7 +274,19 @@ async def request_email(
     request: Request,
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, str]:
-    """Resend email confirmation link for an unconfirmed user account."""
+    """Send a new email confirmation link.
+
+    :param body: Request payload containing the target email address.
+    :type body: RequestEmail
+    :param background_tasks: FastAPI background task manager.
+    :type background_tasks: BackgroundTasks
+    :param request: Incoming request used to build email links.
+    :type request: Request
+    :param db: SQLAlchemy asynchronous database session.
+    :type db: AsyncSession
+    :return: Request status message.
+    :rtype: dict[str, str]
+    """
     user = await repository_users.get_user_by_email(email=body.email, db=db)
 
     if user.confirmed:
@@ -253,7 +317,19 @@ async def password_reset_request(
     request: Request,
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, str]:
-    """Request password reset email for an existing account."""
+    """Request a password reset email.
+
+    :param body: Request payload containing the target email address.
+    :type body: RequestEmail
+    :param background_tasks: FastAPI background task manager.
+    :type background_tasks: BackgroundTasks
+    :param request: Incoming request used to build reset links.
+    :type request: Request
+    :param db: SQLAlchemy asynchronous database session.
+    :type db: AsyncSession
+    :return: Generic password reset request status message.
+    :rtype: dict[str, str]
+    """
     # Look up the account by email, but keep the response generic either way.
     user = await repository_users.get_user_by_email(email=body.email, db=db)
     if user:
@@ -294,7 +370,17 @@ async def password_reset_request(
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def reset_password(token: str, db: AsyncSession = Depends(get_db)) -> None:
-    """Validate password reset token and allow frontend to open reset form."""
+    """Validate a password reset token.
+
+    :param token: Password reset token.
+    :type token: str
+    :param db: SQLAlchemy asynchronous database session.
+    :type db: AsyncSession
+    :raises HTTPException: Raises ``400 Bad Request`` when the token is invalid
+        or expired.
+    :return: Password reset validation status message.
+    :rtype: dict[str, str]
+    """
     await auth_service.validate_password_reset_token(token=token, db=db)
     # return Response(status_code=status.HTTP_204_NO_CONTENT)
     return {"message": "Succes. You can create a new password.", }
@@ -307,7 +393,17 @@ async def reset_password(token: str, db: AsyncSession = Depends(get_db)) -> None
 async def password_reset_confirm(
     body: ResetPasswordSchema, db: AsyncSession = Depends(get_db)
 ) -> None:
-    """Set a new password for user after successful password reset token validation."""
+    """Set a new password after reset token validation.
+
+    :param body: Password reset confirmation payload.
+    :type body: ResetPasswordSchema
+    :param db: SQLAlchemy asynchronous database session.
+    :type db: AsyncSession
+    :raises HTTPException: Raises ``400 Bad Request`` when the reset token is
+        invalid, expired, or the user cannot be updated.
+    :return: Empty ``204 No Content`` response.
+    :rtype: Response
+    """
     email = await auth_service.validate_password_reset_token(token=body.token, db=db)
 
     updated_user = await repository_users.update_user_password(

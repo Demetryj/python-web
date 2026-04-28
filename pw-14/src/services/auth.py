@@ -1,3 +1,5 @@
+"""Authentication service helpers for passwords, JWT tokens, and users."""
+
 import hashlib
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
@@ -16,7 +18,12 @@ from src.repository import users as repository_users
 
 
 class AuthService:
-    """Service layer for password hashing, JWT handling, and user auth context."""
+    """Service layer for password hashing, JWT handling, and user auth context.
+
+    The service centralizes password hashing, token creation, token validation,
+    and current-user resolution for FastAPI dependencies and authentication
+    routes.
+    """
 
     pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
     SECRET_KEY = settings.secret_key
@@ -32,17 +39,37 @@ class AuthService:
 
     # Verify plain password against hashed value.
     def verify_password(self, plain_password: str, hashed_password: str) -> bool:
-        """Return True if plain password matches hashed password."""
+        """Verify a plain password against a stored password hash.
+
+        :param plain_password: Password received from the user.
+        :type plain_password: str
+        :param hashed_password: Stored bcrypt password hash.
+        :type hashed_password: str
+        :return: ``True`` when the password matches, otherwise ``False``.
+        :rtype: bool
+        """
         return self.pwd_context.verify(plain_password, hashed_password)
 
     # Hash plain user password.
     def get_password_hash(self, plain_password: str) -> str:
-        """Return bcrypt hash for the provided plain password."""
+        """Hash a plain password with bcrypt.
+
+        :param plain_password: Password to hash.
+        :type plain_password: str
+        :return: Bcrypt password hash.
+        :rtype: str
+        """
         return self.pwd_context.hash(plain_password)
     
     # Build stable hash for storing and looking up password reset tokens.
     def get_token_hash(self, token: str) -> str:
-        """Return deterministic SHA-256 hash for the provided password reset token."""
+        """Build a deterministic SHA-256 hash for a token.
+
+        :param token: Raw token value.
+        :type token: str
+        :return: Hexadecimal SHA-256 token hash.
+        :rtype: str
+        """
         return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
     # Create signed JWT token with scope and expiration claims.
@@ -52,7 +79,17 @@ class AuthService:
         token_scope: str,
         expires_delta: timedelta,
     ) -> str:
-        """Build and sign JWT token payload with common claims."""
+        """Create and sign a JWT with common claims.
+
+        :param payload: JWT payload data.
+        :type payload: dict[str, Any]
+        :param token_scope: Token scope claim value.
+        :type token_scope: str
+        :param expires_delta: Token lifetime.
+        :type expires_delta: timedelta
+        :return: Encoded JWT string.
+        :rtype: str
+        """
         current_datetime = datetime.now(timezone.utc)
         expire_datetime = current_datetime + expires_delta
 
@@ -70,7 +107,15 @@ class AuthService:
     def create_access_token(
         self, payload: dict[str, Any], expires_delta: Optional[float] = None
     ) -> str:
-        """Return access token for user identity payload."""
+        """Create a short-lived access token.
+
+        :param payload: Token payload, usually containing the user email in ``sub``.
+        :type payload: dict[str, Any]
+        :param expires_delta: Optional lifetime in minutes.
+        :type expires_delta: Optional[float]
+        :return: Encoded access JWT.
+        :rtype: str
+        """
         return self.create_token(
             payload=payload,
             token_scope=self.access_token_name,
@@ -85,7 +130,15 @@ class AuthService:
     def create_email_token(
         self, payload: dict[str, Any], expires_delta: Optional[int] = None
     ) -> str:
-        """Return JWT token with `email_token` scope for email confirmation."""
+        """Create an email confirmation token.
+
+        :param payload: Token payload, usually containing the user email in ``sub``.
+        :type payload: dict[str, Any]
+        :param expires_delta: Optional lifetime in days.
+        :type expires_delta: Optional[int]
+        :return: Encoded email confirmation JWT.
+        :rtype: str
+        """
         return self.create_token(
             payload=payload,
             token_scope=self.email_token_name,
@@ -98,7 +151,15 @@ class AuthService:
     def create_password_reset_token(
         self, payload: dict[str, Any], expires_delta: Optional[int] = None
     ) -> str:
-        """Return JWT token with `password_reset_token` scope for password reset."""
+        """Create a password reset token.
+
+        :param payload: Token payload, usually containing the user email in ``sub``.
+        :type payload: dict[str, Any]
+        :param expires_delta: Optional lifetime in minutes.
+        :type expires_delta: Optional[int]
+        :return: Encoded password reset JWT.
+        :rtype: str
+        """
         return self.create_token(
             payload=payload,
             token_scope=self.password_reset_token,
@@ -111,7 +172,15 @@ class AuthService:
     def create_refresh_token(
         self, payload: dict[str, Any], expires_delta: Optional[float] = None
     ) -> str:
-        """Return refresh token for token renewal flow."""
+        """Create a longer-lived refresh token.
+
+        :param payload: Token payload, usually containing the user email in ``sub``.
+        :type payload: dict[str, Any]
+        :param expires_delta: Optional lifetime in days.
+        :type expires_delta: Optional[float]
+        :return: Encoded refresh JWT.
+        :rtype: str
+        """
         return self.create_token(
             payload=payload,
             token_scope="refresh_token",
@@ -122,12 +191,27 @@ class AuthService:
 
     # Decode and validate JWT signature/expiration.
     def decode_token(self, token: str) -> dict[str, Any]:
-        """Return decoded JWT payload."""
+        """Decode and validate a JWT.
+
+        :param token: Encoded JWT string.
+        :type token: str
+        :raises JWTError: Raised when the token is invalid or expired.
+        :return: Decoded JWT payload.
+        :rtype: dict[str, Any]
+        """
         return jwt.decode(token, self.SECRET_KEY, algorithms=[self.ALGORITHM])
 
     # Extract email from refresh JWT without database checks.
     def extract_email_from_refresh_jwt(self, refresh_token: str) -> str:
-        """Return email from refresh JWT payload or raise 401."""
+        """Extract the user email from a refresh token without database checks.
+
+        :param refresh_token: Encoded refresh JWT.
+        :type refresh_token: str
+        :raises HTTPException: Raises ``401 Unauthorized`` when credentials
+            cannot be validated.
+        :return: User email from the token ``sub`` claim.
+        :rtype: str
+        """
         credentials_exception = HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
@@ -148,7 +232,18 @@ class AuthService:
     async def get_email_from_refresh_token(
         self, refresh_token: str, db: AsyncSession
     ) -> str:
-        """Return email from valid refresh token or raise 401."""
+        """Extract the user email from a valid stored refresh token.
+
+        :param refresh_token: Encoded refresh JWT.
+        :type refresh_token: str
+        :param db: SQLAlchemy asynchronous database session.
+        :type db: AsyncSession
+        :raises HTTPException: Raises ``401 Unauthorized`` when the token is
+            invalid, expired, has an invalid scope, or is not stored in the
+            database.
+        :return: User email from the token ``sub`` claim.
+        :rtype: str
+        """
         credentials_exception = HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
@@ -175,7 +270,16 @@ class AuthService:
         
     # Validate email-confirmation token and extract user's email from `sub`.
     def get_email_from_email_token(self, token: str) -> str:
-        """Return email from valid email-confirmation token or raise 401."""
+        """Extract the user email from an email confirmation token.
+
+        :param token: Encoded email confirmation JWT.
+        :type token: str
+        :raises HTTPException: Raises ``401 Unauthorized`` for an invalid scope
+            or missing subject, and ``422 Unprocessable Entity`` for invalid JWT
+            data.
+        :return: User email from the token ``sub`` claim.
+        :rtype: str
+        """
         credentials_exception = HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token for email verification",
@@ -197,7 +301,15 @@ class AuthService:
             
     # Validate password reset token and extract user's email from `sub`.
     def get_email_from_password_reset_token(self, token: str) -> str:
-        """Return email from valid password reset token or raise 400."""
+        """Extract the user email from a password reset token.
+
+        :param token: Encoded password reset JWT.
+        :type token: str
+        :raises HTTPException: Raises ``400 Bad Request`` when the token is
+            invalid, expired, has an invalid scope, or has no subject.
+        :return: User email from the token ``sub`` claim.
+        :rtype: str
+        """
         credentials_exception = HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid or expired password reset token",
@@ -219,7 +331,17 @@ class AuthService:
     async def validate_password_reset_token(
         self, token: str, db: AsyncSession
     ) -> str:
-        """Return email from valid password reset token or raise 400."""
+        """Validate a password reset token against JWT claims and database state.
+
+        :param token: Encoded password reset JWT.
+        :type token: str
+        :param db: SQLAlchemy asynchronous database session.
+        :type db: AsyncSession
+        :raises HTTPException: Raises ``400 Bad Request`` when the token is
+            invalid, expired, missing from storage, or already used.
+        :return: User email from the token ``sub`` claim.
+        :rtype: str
+        """
         credentials_exception = HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid or expired password reset token",
@@ -255,7 +377,17 @@ class AuthService:
         token: str = Depends(oauth2_scheme),
         db: AsyncSession = Depends(get_db),
     ) -> User:
-        """Authorize request by access token and return the current user."""
+        """Authorize a request and return the current user.
+
+        :param token: Bearer access token resolved by FastAPI OAuth2 dependency.
+        :type token: str
+        :param db: SQLAlchemy asynchronous database session.
+        :type db: AsyncSession
+        :raises HTTPException: Raises ``401 Unauthorized`` when credentials
+            cannot be validated or the user does not exist.
+        :return: Authenticated user model instance.
+        :rtype: User
+        """
         credentials_exception = HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",

@@ -5,15 +5,23 @@ Docker Compose (`environment` / `env_file` on container level), not read
 directly from a local `.env` file inside Python code.
 """
 
+from pathlib import Path
+
 from pydantic import computed_field, EmailStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+BASE_DIR = Path(__file__).resolve().parents[2]
+
 
 class Settings(BaseSettings):
-    """Schema for required env variables and derived application values."""
+    """Application configuration loaded from environment variables.
+
+    The settings object contains database, JWT, email, Redis, and Cloudinary
+    configuration values required by the API.
+    """
 
     # model_config = SettingsConfigDict(
-    #     env_file=".env",
+    #     env_file=BASE_DIR / ".env",
     #     env_file_encoding="utf-8",
     #     extra="ignore",
     # )
@@ -52,6 +60,11 @@ class Settings(BaseSettings):
     @computed_field
     @property
     def DB_URL(self) -> str:
+        """Build the SQLAlchemy async PostgreSQL connection URL.
+
+        :return: PostgreSQL connection URL for ``asyncpg``.
+        :rtype: str
+        """
         return (
             f"postgresql+asyncpg://{self.psg_db_user}:{self.psg_db_password}"
             f"@{self.psg_db_domain}:{self.psg_db_port}/{self.psg_db_name}"

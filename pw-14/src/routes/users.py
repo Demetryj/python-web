@@ -1,3 +1,5 @@
+"""User profile routes."""
+
 import cloudinary
 import cloudinary.uploader
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status
@@ -29,7 +31,13 @@ cloudinary.config(
     dependencies=[Depends(RateLimiter(limiter=users_base_limiter))],
 )
 async def get_me(user: User = Depends(auth_service.get_current_user)) -> UserResponse:
-    """Return current authenticated user profile."""
+    """Return the current authenticated user profile.
+
+    :param user: Current authenticated user resolved from the access token.
+    :type user: User
+    :return: Current user profile data.
+    :rtype: UserResponse
+    """
     return user
 
 
@@ -43,7 +51,19 @@ async def update_avatar(
     user: User = Depends(auth_service.get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> UserResponse:
-    """Upload user's avatar to Cloudinary and save the new avatar URL."""
+    """Upload a user avatar and save the generated Cloudinary URL.
+
+    :param file: Uploaded image file.
+    :type file: UploadFile
+    :param user: Current authenticated user resolved from the access token.
+    :type user: User
+    :param db: SQLAlchemy asynchronous database session.
+    :type db: AsyncSession
+    :raises HTTPException: Raises ``502 Bad Gateway`` when Cloudinary upload
+        fails.
+    :return: Updated user profile data.
+    :rtype: UserResponse
+    """
     public_id = f"pw_13/{user.email}"
 
     # Upload the new avatar to Cloudinary under a stable user-specific public id.

@@ -1,3 +1,5 @@
+"""SQLAlchemy ORM models for contacts, users, and authentication tokens."""
+
 from datetime import date, datetime
 import enum 
 
@@ -7,17 +9,23 @@ from sqlalchemy import Enum, Boolean, Integer, String, func, Column, DateTime, D
 
 # SQLAlchemy base class for declarative models.
 class Base(DeclarativeBase):
+    """Base class for all SQLAlchemy declarative models."""
+
     pass
 
 
 # Mixin with technical timestamps for inherited models.
 class LastModifiedMixin:
+    """Mixin that adds creation and update timestamps to a model."""
+
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
 
 # Contact entity in a user's address book.
 class Contact(Base, LastModifiedMixin):
+    """Contact stored in a user's address book."""
+
     __tablename__ = "contacts"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
@@ -35,6 +43,8 @@ class Contact(Base, LastModifiedMixin):
     
 # Allowed user roles in the system.
 class Role(enum.Enum):
+    """Allowed user roles in the application."""
+
     admin: str = "admin"
     moderator: str = "moderator"
     user: str = "user"
@@ -42,6 +52,8 @@ class Role(enum.Enum):
 
 # Application user and related refresh tokens.
 class User(Base, LastModifiedMixin):
+    """Application user account."""
+
     __tablename__ = "users"
     
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
@@ -60,6 +72,8 @@ class User(Base, LastModifiedMixin):
 # Separate table for refresh tokens: one user can sign in from multiple devices,
 # so each device/session gets its own refresh token row.
 class RefreshToken(Base):
+    """Refresh token issued for an authenticated user session."""
+
     __tablename__ = "refresh_tokens"
     
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)

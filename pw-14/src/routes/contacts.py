@@ -1,3 +1,5 @@
+"""Contact management routes."""
+
 from fastapi import APIRouter, Depends, HTTPException, Path, Query, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi_limiter.depends import RateLimiter
@@ -44,6 +46,19 @@ async def get_contacts(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(auth_service.get_current_user),
 ):
+    """Return a paginated list of contacts owned by the current user.
+
+    :param limit: Maximum number of contacts to return.
+    :type limit: int
+    :param offset: Number of contacts to skip.
+    :type offset: int
+    :param db: SQLAlchemy asynchronous database session.
+    :type db: AsyncSession
+    :param user: Current authenticated user.
+    :type user: User
+    :return: List of contact response objects.
+    :rtype: list[ContactResponse]
+    """
     contacts = await repository_contacts.get_contacts(
         offset=offset, limit=limit, db=db, user=user
     )
@@ -62,6 +77,15 @@ async def get_upcoming_birthdays(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(auth_service.get_current_user),
 ):
+    """Return contacts with birthdays in the next seven days.
+
+    :param db: SQLAlchemy asynchronous database session.
+    :type db: AsyncSession
+    :param user: Current authenticated user.
+    :type user: User
+    :return: Contacts with upcoming birthdays.
+    :rtype: list[ContactResponse]
+    """
     contacts = await repository_contacts.get_upcoming_birthdays(db=db, user=user)
     return contacts
 
@@ -78,6 +102,18 @@ async def get_contact_by_id(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(auth_service.get_current_user),
 ):
+    """Return one contact by id.
+
+    :param contact_id: Contact identifier.
+    :type contact_id: int
+    :param db: SQLAlchemy asynchronous database session.
+    :type db: AsyncSession
+    :param user: Current authenticated user.
+    :type user: User
+    :raises HTTPException: Raises ``404 Not Found`` when the contact does not exist.
+    :return: Contact response object.
+    :rtype: ContactResponse
+    """
     contact = await repository_contacts.get_contact_by_id(
         contact_id=contact_id, db=db, user=user
     )
@@ -100,6 +136,22 @@ async def get_contact_by_value(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(auth_service.get_current_user),
 ):
+    """Search contacts by first name, last name, or email.
+
+    :param first_name: Optional first name search value.
+    :type first_name: str | None
+    :param last_name: Optional last name search value.
+    :type last_name: str | None
+    :param email: Optional email search value.
+    :type email: str | None
+    :param db: SQLAlchemy asynchronous database session.
+    :type db: AsyncSession
+    :param user: Current authenticated user.
+    :type user: User
+    :raises HTTPException: Raises ``404 Not Found`` when no contacts match.
+    :return: Matching contact response objects.
+    :rtype: list[ContactResponse]
+    """
     contact = await repository_contacts.get_contact_by_value(
         first_name=first_name, last_name=last_name, email=email, db=db, user=user
     )
@@ -122,6 +174,20 @@ async def full_update_contact(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(auth_service.get_current_user),
 ):
+    """Fully update all editable fields of a contact.
+
+    :param body: Complete contact update payload.
+    :type body: ContactPutSchema
+    :param contact_id: Contact identifier.
+    :type contact_id: int
+    :param db: SQLAlchemy asynchronous database session.
+    :type db: AsyncSession
+    :param user: Current authenticated user.
+    :type user: User
+    :raises HTTPException: Raises ``404 Not Found`` when the contact does not exist.
+    :return: Updated contact response object.
+    :rtype: ContactResponse
+    """
     contact = await repository_contacts.full_update_contact(
         contact_id=contact_id, body=body, db=db, user=user
     )
@@ -144,6 +210,20 @@ async def partial_update_contact(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(auth_service.get_current_user),
 ):
+    """Partially update editable fields of a contact.
+
+    :param body: Partial contact update payload.
+    :type body: ContactUpdateSchema
+    :param contact_id: Contact identifier.
+    :type contact_id: int
+    :param db: SQLAlchemy asynchronous database session.
+    :type db: AsyncSession
+    :param user: Current authenticated user.
+    :type user: User
+    :raises HTTPException: Raises ``404 Not Found`` when the contact does not exist.
+    :return: Updated contact response object.
+    :rtype: ContactResponse
+    """
     contact = await repository_contacts.update_contact(
         contact_id=contact_id, body=body, db=db, user=user
     )
@@ -165,6 +245,17 @@ async def create_contact(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(auth_service.get_current_user),
 ):
+    """Create a contact for the current user.
+
+    :param body: Contact creation payload.
+    :type body: ContactSchema
+    :param db: SQLAlchemy asynchronous database session.
+    :type db: AsyncSession
+    :param user: Current authenticated user.
+    :type user: User
+    :return: Created contact response object.
+    :rtype: ContactResponse
+    """
     contact = await repository_contacts.create_contact(body=body, db=db, user=user)
     return contact
 
@@ -181,6 +272,18 @@ async def delete_contact(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(auth_service.get_current_user),
 ):
+    """Delete a contact by id.
+
+    :param contact_id: Contact identifier.
+    :type contact_id: int
+    :param db: SQLAlchemy asynchronous database session.
+    :type db: AsyncSession
+    :param user: Current authenticated user.
+    :type user: User
+    :raises HTTPException: Raises ``404 Not Found`` when the contact does not exist.
+    :return: Empty ``204 No Content`` response.
+    :rtype: Response
+    """
     contact = await repository_contacts.delete_contact(
         contact_id=contact_id, db=db, user=user
     )

@@ -22,9 +22,14 @@ logger = logging.getLogger(__name__)
 
 
 class DatabaseSessionManager:
-    """Creates async engine/session factory and manages session lifecycle."""
+    """Create async engine/session factory and manage session lifecycle."""
 
     def __init__(self, db_url: str):
+        """Initialize the async database engine and session maker.
+
+        :param db_url: SQLAlchemy async database URL.
+        :type db_url: str
+        """
         self._engine: AsyncEngine | None = create_async_engine(db_url)
         self._session_maker: async_sessionmaker = async_sessionmaker(
             autoflush=False, autocommit=False, bind=self._engine
@@ -32,6 +37,14 @@ class DatabaseSessionManager:
 
     @asynccontextmanager
     async def get_session(self):
+        """Yield an asynchronous database session.
+
+        :raises Exception: Raised when the session maker is not initialized.
+        :raises SQLAlchemyError: Re-raised after rolling back failed database
+            operations.
+        :return: Async context manager yielding an ``AsyncSession``.
+        :rtype: AsyncGenerator[AsyncSession, None]
+        """
         if self._session_maker is None:
             raise Exception("Session is not initialized")
         session = self._session_maker()
@@ -50,6 +63,10 @@ sessionmanager = DatabaseSessionManager(settings.DB_URL)
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
-    """FastAPI dependency that yields a request-scoped async DB session."""
+    """Yield a request-scoped async database session.
+
+    :return: Async generator with one ``AsyncSession``.
+    :rtype: AsyncGenerator[AsyncSession, None]
+    """
     async with sessionmanager.get_session() as session:
         yield session

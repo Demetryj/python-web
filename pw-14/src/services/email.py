@@ -1,3 +1,9 @@
+"""Email delivery helpers for user-facing authentication messages.
+
+This module configures the SMTP connection used by ``fastapi-mail`` and exposes
+an async helper for sending templated HTML emails.
+"""
+
 import logging
 from pathlib import Path
 
@@ -6,7 +12,6 @@ from fastapi_mail.errors import ConnectionErrors
 from pydantic import EmailStr
 
 from src.config.settings import settings
-from src.services.auth import auth_service
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +40,29 @@ async def send_email(
     subject: str,
     template_name: str,
 ) -> None:
-    """Send an HTML email using the provided subject, template, and token."""
+    """Send a templated HTML email to a user.
+
+    The function builds a ``MessageSchema`` with the provided recipient,
+    template context, and subject, then sends it through the configured SMTP
+    server. It is used for email confirmation and password reset messages.
+
+    :param email: Recipient email address.
+    :type email: EmailStr
+    :param username: User name displayed in the email template.
+    :type username: str
+    :param host: Base application URL used to build links in the template.
+    :type host: str
+    :param token: Verification or password reset token passed to the template.
+    :type token: str
+    :param subject: Email subject line.
+    :type subject: str
+    :param template_name: Name of the HTML template file to render.
+    :type template_name: str
+    :return: ``None``.
+    :rtype: None
+
+    :raises ConnectionErrors: SMTP connection errors are caught and logged.
+    """
     try:
         message = MessageSchema(
             subject=subject,

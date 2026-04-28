@@ -1,3 +1,5 @@
+"""Database operations for refresh tokens and password reset tokens."""
+
 from datetime import datetime
 
 from sqlalchemy import delete, select
@@ -8,7 +10,17 @@ from src.entity.models import RefreshToken, PasswordResetToken
 
 # Create and persist a refresh token row for a user.
 async def add_refresh_token(token: str, user_id: int, db: AsyncSession) -> RefreshToken:
-    """Store refresh token in DB and return created token row."""
+    """Store a refresh token.
+
+    :param token: Raw refresh token value.
+    :type token: str
+    :param user_id: Owner user identifier.
+    :type user_id: int
+    :param db: SQLAlchemy asynchronous database session.
+    :type db: AsyncSession
+    :return: Created refresh token row.
+    :rtype: RefreshToken
+    """
     record = RefreshToken(rf_token=token, user_id=user_id)
     db.add(record)
     await db.commit()
@@ -20,7 +32,15 @@ async def add_refresh_token(token: str, user_id: int, db: AsyncSession) -> Refre
 async def get_refresh_token_by_token(
     token: str, db: AsyncSession
 ) -> RefreshToken | None:
-    """Return refresh token row by token value, or None if not found."""
+    """Return a refresh token row by token value.
+
+    :param token: Raw refresh token value.
+    :type token: str
+    :param db: SQLAlchemy asynchronous database session.
+    :type db: AsyncSession
+    :return: Refresh token row when found, otherwise ``None``.
+    :rtype: RefreshToken | None
+    """
     stmt = select(RefreshToken).filter_by(rf_token=token)
     result = await db.execute(stmt)
     return result.scalar_one_or_none()
@@ -30,7 +50,17 @@ async def get_refresh_token_by_token(
 async def update_refresh_token(
     old_token: str, new_token: str, db: AsyncSession
 ) -> RefreshToken | None:
-    """Rotate an existing refresh token value and return updated token row."""
+    """Replace an existing refresh token value.
+
+    :param old_token: Current refresh token value.
+    :type old_token: str
+    :param new_token: New refresh token value.
+    :type new_token: str
+    :param db: SQLAlchemy asynchronous database session.
+    :type db: AsyncSession
+    :return: Updated refresh token row when found, otherwise ``None``.
+    :rtype: RefreshToken | None
+    """
     stmt = select(RefreshToken).filter_by(rf_token=old_token)
     result = await db.execute(stmt)
     db_token = result.scalar_one_or_none()
@@ -45,7 +75,15 @@ async def update_refresh_token(
 
 # Delete all refresh tokens belonging to a user.
 async def delete_refresh_tokens_by_user_id(user_id: int, db: AsyncSession) -> None:
-    """Delete all refresh token rows for the provided user id."""
+    """Delete all refresh tokens for a user.
+
+    :param user_id: Owner user identifier.
+    :type user_id: int
+    :param db: SQLAlchemy asynchronous database session.
+    :type db: AsyncSession
+    :return: ``None``.
+    :rtype: None
+    """
     stmt = delete(RefreshToken).where(RefreshToken.user_id == user_id)
     await db.execute(stmt)
     await db.commit()
@@ -53,7 +91,15 @@ async def delete_refresh_tokens_by_user_id(user_id: int, db: AsyncSession) -> No
 
 # Delete one refresh token by value.
 async def delete_refresh_token_by_token(token: str, db: AsyncSession) -> bool:
-    """Delete refresh token row by token value and return deletion status."""
+    """Delete one refresh token by token value.
+
+    :param token: Raw refresh token value.
+    :type token: str
+    :param db: SQLAlchemy asynchronous database session.
+    :type db: AsyncSession
+    :return: ``True`` when a row was deleted, otherwise ``False``.
+    :rtype: bool
+    """
     stmt = delete(RefreshToken).where(RefreshToken.rf_token == token)
     result = await db.execute(stmt)
     await db.commit()
@@ -65,7 +111,19 @@ async def delete_refresh_token_by_token(token: str, db: AsyncSession) -> bool:
 async def add_password_reset_token(
     user_id: int, token_hash: str, expires_at: datetime, db: AsyncSession
 ) -> None:
-    """Store password reset token state for a user, replacing existing token if present."""
+    """Store or rotate a password reset token record.
+
+    :param user_id: Owner user identifier.
+    :type user_id: int
+    :param token_hash: Deterministic hash of the raw reset token.
+    :type token_hash: str
+    :param expires_at: Reset token expiration timestamp.
+    :type expires_at: datetime
+    :param db: SQLAlchemy asynchronous database session.
+    :type db: AsyncSession
+    :return: ``None``.
+    :rtype: None
+    """
     # Keep at most one active password reset token row per user.
     stmt = select(PasswordResetToken).filter_by(user_id=user_id)
     result = await db.execute(stmt)
@@ -92,7 +150,15 @@ async def add_password_reset_token(
 async def get_password_reset_token(
     token_hash: str, db: AsyncSession
 ) -> PasswordResetToken | None:
-    """Return password reset token row by token hash, or None if not found."""
+    """Return a password reset token row by token hash.
+
+    :param token_hash: Deterministic hash of the raw reset token.
+    :type token_hash: str
+    :param db: SQLAlchemy asynchronous database session.
+    :type db: AsyncSession
+    :return: Password reset token row when found, otherwise ``None``.
+    :rtype: PasswordResetToken | None
+    """
     stmt = select(PasswordResetToken).filter_by(token_hash=token_hash)
     result = await db.execute(stmt)
     reset_token = result.scalar_one_or_none()
@@ -101,7 +167,15 @@ async def get_password_reset_token(
 
 # Mark password reset token as used after successful password change.
 async def update_used_status_password_reset_token(token_hash: str, db: AsyncSession):
-    """Set `used_at` timestamp for password reset token if it exists."""
+    """Mark a password reset token as used.
+
+    :param token_hash: Deterministic hash of the raw reset token.
+    :type token_hash: str
+    :param db: SQLAlchemy asynchronous database session.
+    :type db: AsyncSession
+    :return: ``None``.
+    :rtype: None
+    """
     db_token_obj = await get_password_reset_token(token_hash=token_hash, db=db)
     if not db_token_obj:
         return

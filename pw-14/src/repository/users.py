@@ -1,3 +1,5 @@
+"""Database operations for user accounts."""
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from libgravatar import Gravatar
@@ -11,14 +13,33 @@ logger = logging.getLogger(__name__)
 
 
 async def get_user_by_email(email: str, db: AsyncSession) -> User | None:
-    """Return a user by email, or None when no user exists."""
+    """Return a user by email.
+
+    :param email: User email address.
+    :type email: str
+    :param db: SQLAlchemy asynchronous database session.
+    :type db: AsyncSession
+    :return: User instance when found, otherwise ``None``.
+    :rtype: User | None
+    """
     stmt = select(User).filter_by(email=email)
     user = await db.execute(stmt)
     return user.scalar_one_or_none()
 
 
 async def create_user(body: UserShchema, db: AsyncSession) -> User:
-    """Create a new user and try to enrich profile with a Gravatar URL."""
+    """Create a new user account.
+
+    The function tries to fetch a Gravatar image for the provided email and
+    stores it as the initial avatar when available.
+
+    :param body: User registration payload.
+    :type body: UserShchema
+    :param db: SQLAlchemy asynchronous database session.
+    :type db: AsyncSession
+    :return: Created user instance.
+    :rtype: User
+    """
     avatar = None
     try:
         g = Gravatar(body.email)
@@ -36,7 +57,15 @@ async def create_user(body: UserShchema, db: AsyncSession) -> User:
 
 
 async def confirm_email(email: str, db: AsyncSession) -> None:
-    """Mark user as confirmed by email and persist changes."""
+    """Mark a user email as confirmed.
+
+    :param email: User email address.
+    :type email: str
+    :param db: SQLAlchemy asynchronous database session.
+    :type db: AsyncSession
+    :return: ``None``.
+    :rtype: None
+    """
     user: User | None = await get_user_by_email(email=email, db=db)
     if user is None:
         return
@@ -50,7 +79,17 @@ async def update_avatar_url(
     avatar_url: str,
     db: AsyncSession,
 ) -> User | None:
-    """Update user's avatar URL and return updated user, or None if not found."""
+    """Update a user's avatar URL.
+
+    :param email: User email address.
+    :type email: str
+    :param avatar_url: New avatar image URL.
+    :type avatar_url: str
+    :param db: SQLAlchemy asynchronous database session.
+    :type db: AsyncSession
+    :return: Updated user instance when found, otherwise ``None``.
+    :rtype: User | None
+    """
     user = await get_user_by_email(email=email, db=db)
     if user is None:
         return None
@@ -65,7 +104,17 @@ async def update_user_password(
     hashed_password: str,
     db: AsyncSession,
 ) -> User | None:
-    """Update user's password hash and return updated user, or None if not found."""
+    """Update a user's password hash.
+
+    :param email: User email address.
+    :type email: str
+    :param hashed_password: New hashed password value.
+    :type hashed_password: str
+    :param db: SQLAlchemy asynchronous database session.
+    :type db: AsyncSession
+    :return: Updated user instance when found, otherwise ``None``.
+    :rtype: User | None
+    """
     user = await get_user_by_email(email=email, db=db)
     if user is None:
         return None

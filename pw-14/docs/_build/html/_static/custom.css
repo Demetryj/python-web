@@ -1,0 +1,56 @@
+/* Keep long autodoc names and FastAPI signatures inside the page layout. */
+.sphinxsidebarwrapper,
+.sphinxsidebarwrapper a,
+.body,
+.bodywrapper {
+    overflow-wrap: anywhere;
+    word-break: normal;
+}
+
+.sphinxsidebarwrapper {
+    max-width: 100%;
+}
+
+.sphinxsidebarwrapper ul {
+    padding-left: 1.2em;
+    max-width: 100%;
+}
+
+.sphinxsidebarwrapper li {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    word-break: break-all;
+}
+
+.sphinxsidebarwrapper li a {
+    display: inline-block;
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-all;
+}
+
+.sphinxsidebarwrapper span.pre,
+dl.py dt span.pre,
+dl.function dt span.pre,
+dl.class dt span.pre,
+dl.method dt span.pre,
+dl.attribute dt span.pre {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-all;
+}
+
+dl.py dt,
+dl.function dt,
+dl.class dt,
+dl.method dt,
+dl.attribute dt {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.sphinxsidebarwrapper li {
+    line-height: 1.35;
+}
