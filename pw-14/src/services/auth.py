@@ -174,7 +174,7 @@ class AuthService:
             raise credentials_exception
         
     # Validate email-confirmation token and extract user's email from `sub`.
-    async def get_email_from_email_token(self, token: str) -> str:
+    def get_email_from_email_token(self, token: str) -> str:
         """Return email from valid email-confirmation token or raise 401."""
         credentials_exception = HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -196,7 +196,7 @@ class AuthService:
             )
             
     # Validate password reset token and extract user's email from `sub`.
-    async def get_email_from_password_reset_token(self, token: str) -> str:
+    def get_email_from_password_reset_token(self, token: str) -> str:
         """Return email from valid password reset token or raise 400."""
         credentials_exception = HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -226,7 +226,7 @@ class AuthService:
         )
 
         # Validate JWT signature, expiration, and password-reset scope.
-        email = await self.get_email_from_password_reset_token(token)
+        email = self.get_email_from_password_reset_token(token)
 
         # Look up the stored reset token row by deterministic token hash.
         token_hash = self.get_token_hash(token)

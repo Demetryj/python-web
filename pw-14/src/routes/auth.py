@@ -196,7 +196,7 @@ async def confirm_email(
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, str]:
     """Confirm user's email by verification token and return status message."""
-    email = await auth_service.get_email_from_email_token(token=token)
+    email = auth_service.get_email_from_email_token(token=token)
     user = await repository_users.get_user_by_email(email=email, db=db)
 
     if user is None:
@@ -324,4 +324,3 @@ async def password_reset_confirm(
     token_hash = auth_service.get_token_hash(body.token)
     await repository_auth.update_used_status_password_reset_token(token_hash, db=db)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
-
