@@ -20,7 +20,9 @@ from src.repository.auth import (
 class TestAsyncAuthToken(unittest.IsolatedAsyncioTestCase):
 
     def setUp(self):
-        self.db: AsyncSession = AsyncMock(spec=AsyncSession)
+        self.db: AsyncSession = AsyncMock(
+            spec=AsyncSession
+        )  # (spec=AsyncSession) to mock all AsyncSession methods
         self.refresh_token = "refresh_token"
         self.user: User = User(
             id=1,

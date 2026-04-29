@@ -5,9 +5,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from libgravatar import Gravatar
 import logging
 
-from src.entity.models import User, PasswordResetToken
+from src.entity.models import User
 from src.schemas.users import UserShchema
-from src.schemas.auth import ResetPasswordSchema
 
 logger = logging.getLogger(__name__)
 
