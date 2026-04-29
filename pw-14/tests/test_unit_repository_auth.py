@@ -24,12 +24,6 @@ class TestAsyncAuthToken(unittest.IsolatedAsyncioTestCase):
         self.refresh_token = "refresh_token"
         self.user: User = User(
             id=1,
-            username="AlexDou",
-            email="alexdou@mail.com",
-            password="123456789",
-            avatar="link_to_image",
-            role="user",
-            confirmed=True,
         )
 
     # =========================================================
