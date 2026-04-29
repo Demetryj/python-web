@@ -201,7 +201,7 @@ async def delete_contact(
     :return: Deleted contact when found, otherwise ``None``.
     :rtype: Contact | None
     """
-    stmt = select(Contact).filter_by(id == contact_id, user=user)
+    stmt = select(Contact).filter_by(id=contact_id, user=user)
     result = await db.execute(stmt)
     contact = result.scalar_one_or_none()
 

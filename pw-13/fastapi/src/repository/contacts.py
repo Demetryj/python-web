@@ -119,7 +119,7 @@ async def delete_contact(
     contact_id: int, db: AsyncSession, user: User
 ) -> Contact | None:
     """Delete a contact by id and return the deleted object."""
-    stmt = select(Contact).filter_by(id == contact_id, user=user)
+    stmt = select(Contact).filter_by(id=contact_id, user=user)
     result = await db.execute(stmt)
     contact = result.scalar_one_or_none()
 
