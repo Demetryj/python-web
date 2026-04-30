@@ -114,6 +114,89 @@ docker compose logs -f
 docker compose down
 ```
 
+## Documentation
+
+Project documentation is built with Sphinx from the `docs/` directory.
+
+Rebuild HTML documentation inside the Docker container:
+
+```bash
+docker compose exec fastapi-server rm -rf docs/_build
+docker compose exec fastapi-server poetry run sphinx-build -b html docs docs/_build/html
+```
+
+Generated HTML files are written to:
+
+```text
+docs/_build/html
+```
+
+Local build without Docker:
+
+```bash
+poetry run sphinx-build -b html docs docs/_build/html
+```
+
+## Tests
+
+The project has unit tests for repository/service-level behavior and E2E-style
+integration tests for FastAPI routes through `TestClient`.
+
+Install test dependencies if they are not installed yet:
+
+```bash
+poetry install --with test
+```
+
+### Unit Tests
+
+Unit tests are stored in:
+
+```text
+tests/test_unit_repository_auth.py
+tests/test_unit_repository_contacts.py
+tests/test_unit_repository_users.py
+```
+
+Run all unit tests:
+
+```bash
+poetry run pytest -v tests/test_unit_repository_auth.py tests/test_unit_repository_contacts.py tests/test_unit_repository_users.py
+```
+
+Run one unit test file:
+
+```bash
+poetry run pytest -v tests/test_unit_repository_contacts.py
+```
+
+### Integration Tests
+
+Integration tests are stored in:
+
+```text
+tests/test_e2e_contacts.py
+tests/test_e2e_users.py
+```
+
+Run all integration tests:
+
+```bash
+poetry run pytest -v tests/test_e2e_contacts.py tests/test_e2e_users.py
+```
+
+Run one integration test file:
+
+```bash
+poetry run pytest -v tests/test_e2e_contacts.py
+```
+
+Run the full test suite:
+
+```bash
+poetry run pytest -v
+```
+
 ## API Routes
 
 ### Auth routes
@@ -272,7 +355,7 @@ docker compose logs -f fastapi-server
 ## Project Structure
 
 ```text
-pw-13/fastapi/
+pw-14/
   main.py
   docker-compose.yaml
   Dockerfile
@@ -297,8 +380,3 @@ pw-13/fastapi/
     services/templates/reset_password.html
     migrations/
 ```
-
-<!-- docker compose exec fastapi-server rm -rf docs/_build
-docker compose exec fastapi-server poetry run sphinx-build -b html docs docs/_build/html -->
-
-poetry run python -m unittest -v tests.test_unit_repository_auth
