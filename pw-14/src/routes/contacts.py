@@ -16,6 +16,7 @@ from src.entity.models import User, Role
 from src.services.auth import auth_service
 from src.services.role import RoleAccess
 from src.config.rate_limiters import contacts_base_limiter
+from src.config.messages import HTTPExceptionMessages
 
 router = APIRouter(
     prefix="/contacts",
@@ -118,7 +119,10 @@ async def get_contact_by_id(
         contact_id=contact_id, db=db, user=user
     )
     if contact is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=HTTPExceptionMessages.not_found.value,
+        )
     return contact
 
 
@@ -156,7 +160,10 @@ async def get_contact_by_value(
         first_name=first_name, last_name=last_name, email=email, db=db, user=user
     )
     if not contact:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=HTTPExceptionMessages.not_found.value,
+        )
     return contact
 
 
@@ -192,7 +199,10 @@ async def full_update_contact(
         contact_id=contact_id, body=body, db=db, user=user
     )
     if contact is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=HTTPExceptionMessages.not_found.value,
+        )
     return contact
 
 
@@ -228,7 +238,10 @@ async def partial_update_contact(
         contact_id=contact_id, body=body, db=db, user=user
     )
     if contact is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=HTTPExceptionMessages.not_found.value,
+        )
     return contact
 
 
@@ -288,5 +301,8 @@ async def delete_contact(
         contact_id=contact_id, db=db, user=user
     )
     if contact is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=HTTPExceptionMessages.not_found.value,
+        )
     return Response(status_code=status.HTTP_204_NO_CONTENT)

@@ -2,6 +2,7 @@ import asyncio
 import logging
 import os
 from pathlib import Path
+from fastapi import Request, Response
 
 import pytest
 import pytest_asyncio
@@ -47,6 +48,20 @@ test_user = {
 }
 
 
+@pytest.fixture(autouse=True)
+def disable_rate_limiter(monkeypatch):
+    """Disable FastAPI rate limiting in endpoint tests."""
+
+    async def mock_rate_limiter_call(
+        self,
+        request: Request,
+        response: Response,
+    ) -> None:
+        return None
+
+    monkeypatch.setattr(RateLimiter, "__call__", mock_rate_limiter_call)
+
+
 @pytest.fixture(scope="module", autouse=True)
 def init_models_wrap():
     # Recreate all tables and insert a confirmed admin user once per test module.
@@ -79,6 +94,7 @@ def client():
         except Exception as err:
             logger.error(err)
             await session.rollback()
+            raise
         finally:
             await session.close()
 

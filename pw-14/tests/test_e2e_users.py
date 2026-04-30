@@ -1,20 +1,22 @@
-from unittest.mock import MagicMock, AsyncMock
+from unittest.mock import MagicMock
+
 
 from tests.conftest import test_user
 
 PREFIX = "api/user"
+
 
 def test_get_me(client, get_token) -> None:
     """Test that an authenticated user can get their own profile data."""
 
     token = get_token
     headers = {"Authorization": f"Bearer {token}"}
-    
-    response = client.get(f'{PREFIX}/me', headers=headers)
+
+    response = client.get(f"{PREFIX}/me", headers=headers)
     assert response.status_code == 200, response.text
     data = response.json()
     assert data["email"] == test_user["email"]
-    
+
 
 def test_update_avatar(client, get_token, monkeypatch) -> None:
     """Test that an authenticated user can upload and update their avatar."""
