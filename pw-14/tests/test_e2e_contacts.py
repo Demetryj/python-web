@@ -1,4 +1,5 @@
 from datetime import date
+from uuid import uuid4
 
 import pytest
 import pytest_asyncio
@@ -43,7 +44,7 @@ def mock_contacts_role_access():
         app.dependency_overrides.pop(dependency, None)
 
 
-@pytest_asyncio.fixture(scope="module")
+@pytest_asyncio.fixture()
 async def existing_contact() -> Contact:
     """Create and return a contact that belongs to the default test user."""
 
@@ -58,7 +59,7 @@ async def existing_contact() -> Contact:
         contact = Contact(
             first_name="John",
             last_name="Doe",
-            email="john.doe@mail.com",
+            email=f"john.doe.{uuid4().hex}@mail.com",
             phone_number="+380671234567",
             birth_date=date(1990, 1, 1),
             user_id=user.id,
@@ -71,17 +72,21 @@ async def existing_contact() -> Contact:
         return contact
 
 
-def test_get_all_contacts(client, get_token, mock_contacts_role_access) -> None:
+def test_get_all_contacts(
+    client, get_token, mock_contacts_role_access, existing_contact
+) -> None:
     """Test that an authenticated user can get a list of their contacts."""
 
     token = get_token
     headers = {"Authorization": f"Bearer {token}"}
+    test_contact: Contact = existing_contact
 
     response = client.get(f"{PREFIX}/all", headers=headers)
 
     assert response.status_code == 200, response.text
     data = response.json()
     assert isinstance(data, list)
+    assert any(contact["id"] == test_contact.id for contact in data)
 
 
 def test_get_upcoming_birthdays(client, get_token, mock_contacts_role_access) -> None:
@@ -337,6 +342,6 @@ def test_delete_contact_if_not_found(
     response = client.delete(f"{PREFIX}/{missing_id}", headers=headers)
 
     assert response.status_code == 404, response.text
-    
+
     data = response.json()
     assert data["detail"] == HTTPExceptionMessages.not_found.value
