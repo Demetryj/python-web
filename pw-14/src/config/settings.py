@@ -1,8 +1,7 @@
 ﻿"""
 Application settings managed via Pydantic Settings.
-In this setup, environment variables are expected to be injected by
-Docker Compose (`environment` / `env_file` on container level), not read
-directly from a local `.env` file inside Python code.
+Local runs can read values from the project `.env` file, while Docker Compose
+can still override them by passing real environment variables into the process.
 """
 
 from pathlib import Path
@@ -20,16 +19,18 @@ class Settings(BaseSettings):
     configuration values required by the API.
     """
 
-    # model_config = SettingsConfigDict(
-    #     env_file=BASE_DIR / ".env",
-    #     env_file_encoding="utf-8",
-    #     extra="ignore",
-    # )
-
+    # Read .env for local runs and tests. Real environment variables still have
+    # priority, so Docker Compose can override these values inside containers.
+    model_config = SettingsConfigDict(
+        env_file=BASE_DIR / ".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
+    
     # We use env_file=None because Docker Compose already injects env vars
     # into the container process. This avoids coupling to a local .env path
     # inside the container and keeps configuration centralized in compose.
-    model_config = SettingsConfigDict(env_file=None, extra="ignore")
+    # model_config = SettingsConfigDict(env_file=None, extra="ignore")
 
     # Properties (fields, attributes) can be in either lower or upper case.
     # Each of them can have a default value..
@@ -52,6 +53,10 @@ class Settings(BaseSettings):
     REDIS_PORT: int = 6379
     REDIS_DB: int = 0
     REDIS_PASSWORD: str | None = None
+
+    # Tests set this flag before importing the app. Rate limiter setup uses it
+    # to avoid creating Redis-backed buckets during local pytest runs.
+    testing: bool = False
     
     CLOUDINARY_NAME: str
     CLOUDINARY_API_KEY: int

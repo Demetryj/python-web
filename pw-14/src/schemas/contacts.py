@@ -2,7 +2,7 @@
 
 from datetime import date, datetime
 
-from pydantic import BaseModel, Field, EmailStr, field_validator, field_serializer
+from pydantic import BaseModel, ConfigDict, Field, EmailStr, field_validator, field_serializer
 from pydantic_extra_types.phone_numbers import PhoneNumber
 
 
@@ -96,5 +96,4 @@ class ContactResponse(ContactSchema):
         """
         return value.strftime("%d-%m-%Y")
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

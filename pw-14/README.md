@@ -300,3 +300,5 @@ pw-13/fastapi/
 
 <!-- docker compose exec fastapi-server rm -rf docs/_build
 docker compose exec fastapi-server poetry run sphinx-build -b html docs docs/_build/html -->
+
+poetry run python -m unittest -v tests.test_unit_repository_auth

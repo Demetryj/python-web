@@ -1,7 +1,7 @@
-﻿"""Centralized Redis-backed rate limiter definitions for API routes."""
+"""Centralized rate limiter definitions for API routes."""
 
 from redis import Redis
-from pyrate_limiter import Duration, Limiter, Rate, RedisBucket
+from pyrate_limiter import Duration, InMemoryBucket, Limiter, Rate, RedisBucket
 
 from src.config.settings import settings
 
@@ -14,7 +14,7 @@ redis_client = Redis(
 
 
 def make_limiter(rate: Rate, bucket: str) -> Limiter:
-    """Create a Redis-backed rate limiter.
+    """Create a rate limiter for the current runtime.
 
     :param rate: Allowed request rate.
     :type rate: Rate
@@ -23,6 +23,11 @@ def make_limiter(rate: Rate, bucket: str) -> Limiter:
     :return: Configured limiter instance.
     :rtype: Limiter
     """
+    if settings.testing:
+        # Tests import routes before fixtures run. Use an in-memory bucket here
+        # so importing the app does not require a Redis connection.
+        return Limiter(InMemoryBucket([rate]))
+
     redis_bucket = RedisBucket.init([rate], redis_client, bucket)
     return Limiter(redis_bucket)
 
@@ -38,13 +43,17 @@ auth_confirm_email_limiter = make_limiter(Rate(10, Duration.MINUTE), "auth_confi
 auth_request_email_limiter = make_limiter(
     Rate(3, Duration.MINUTE * 5), "auth_request_email"
 )
-auth_reset_password_limiter = make_limiter(Rate(5, Duration.MINUTE * 60 * 12), "auth_reset_password")
+auth_reset_password_limiter = make_limiter(
+    Rate(5, Duration.MINUTE * 60 * 12), "auth_reset_password"
+)
 
 # CONTACTS
 # contacts routes - base
 contacts_base_limiter = make_limiter(Rate(10, Duration.MINUTE), "contacts_base")
 
 # USER
-# users routes -  base
+# users routes - base
 users_base_limiter = make_limiter(Rate(10, Duration.MINUTE), "users_base")
-user_update_avatar_limiter = make_limiter(Rate(1,  Duration.SECOND * 30), "user_update_avatar")
+user_update_avatar_limiter = make_limiter(
+    Rate(1, Duration.SECOND * 30), "user_update_avatar"
+)
