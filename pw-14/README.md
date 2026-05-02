@@ -175,6 +175,7 @@ poetry run pytest -v tests/test_unit_repository_contacts.py
 Integration tests are stored in:
 
 ```text
+tests/test_e2e_auth.py
 tests/test_e2e_contacts.py
 tests/test_e2e_users.py
 ```
@@ -182,7 +183,7 @@ tests/test_e2e_users.py
 Run all integration tests:
 
 ```bash
-poetry run pytest -v tests/test_e2e_contacts.py tests/test_e2e_users.py
+poetry run pytest -v tests/test_e2e_auth.py tests/test_e2e_contacts.py tests/test_e2e_users.py
 ```
 
 Run one integration test file:
@@ -190,6 +191,22 @@ Run one integration test file:
 ```bash
 poetry run pytest -v tests/test_e2e_contacts.py
 ```
+
+Run auth route integration tests only:
+
+```bash
+poetry run pytest -v tests/test_e2e_auth.py
+```
+
+`tests/test_e2e_auth.py` covers the main auth route scenarios:
+
+- signup success and duplicate signup conflict
+- signin success, unconfirmed email, wrong email, and wrong password
+- email confirmation for unconfirmed, confirmed, and missing users
+- request-email flow for unconfirmed, confirmed, and missing users
+- refresh-token success and key failure branches
+- logout and refresh token revocation behavior
+- password reset request, verification, confirmation, and failure branch
 
 Run the full test suite:
 

@@ -15,7 +15,6 @@ from src.routes.contacts import (
     allowed_operation_delete,
 )
 from src.entity.models import Contact, User
-from src.schemas.contacts import ContactPutSchema
 from src.config.messages import HTTPExceptionMessages
 
 PREFIX = "/api/contacts"

@@ -25,6 +25,7 @@ from src.services.email import send_email
 from src.schemas.users import UserResponse, UserShchema
 from src.schemas.auth import TokenSchema, RequestEmail, ResetPasswordSchema
 from src.repository import users as repository_users, auth as repository_auth
+from src.config.messages import CHECK_EMAIL_FOR_CONFIRMATION, EMAIL_ALREADY_CONFIRMED, EMAIL_CONFIRMED, INVALID_OR_EXPIRED_PASSWORD_RESET_TOKEN, RESET_PASSWORD_EMAIL_EXITS, SUCCESS_TO_CREATE_NEW_PASSWORD, HTTPExceptionMessages
 from src.config.rate_limiters import (
     auth_base_limiter,
     auth_request_email_limiter,
@@ -80,7 +81,8 @@ async def register(
     user = await repository_users.get_user_by_email(email=body.email, db=db)
     if user:
         raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT, detail="Account already exists"
+            status_code=status.HTTP_409_CONFLICT,
+            detail=HTTPExceptionMessages.account_already_exists.value,
         )
     body.password = auth_service.get_password_hash(body.password)
     new_user = await repository_users.create_user(body=body, db=db)
@@ -117,18 +119,21 @@ async def login(
     user = await repository_users.get_user_by_email(email=body.username, db=db)
     if user is None:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password"
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=HTTPExceptionMessages.invalid_email_or_password.value,
         )
 
     if not user.confirmed:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Email not confirmed"
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=HTTPExceptionMessages.email_not_confirmed.value,
         )
 
     is_match_password = auth_service.verify_password(body.password, user.password)
     if not is_match_password:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password"
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=HTTPExceptionMessages.invalid_email_or_password.value,
         )
     # Generate JWT
     access_token = auth_service.create_access_token(payload={"sub": user.email})
@@ -168,7 +173,7 @@ async def refresh_token(
     # to avoid exposing which validation step failed.
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate token",
+        detail=HTTPExceptionMessages.could_not_validate_token.value,
         headers={"WWW-Authenticate": "Bearer"},
     )
     # Read raw refresh token from the Authorization: Bearer <token> header.
@@ -253,14 +258,14 @@ async def confirm_email(
 
     if user is None:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Verification error"
+            status_code=status.HTTP_400_BAD_REQUEST, detail=HTTPExceptionMessages.verification_error.value
         )
 
     if user.confirmed:
-        return {"message": "Your email is already confirmed"}
+        return {"message": EMAIL_ALREADY_CONFIRMED}
 
     await repository_users.confirm_email(email=email, db=db)
-    return {"message": "Email confirmed"}
+    return {"message": EMAIL_CONFIRMED}
 
 
 @router.post(
@@ -289,8 +294,14 @@ async def request_email(
     """
     user = await repository_users.get_user_by_email(email=body.email, db=db)
 
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=HTTPExceptionMessages.not_found.value,
+        )
+    
     if user.confirmed:
-        return {"message": "Your email is already confirmed"}
+        return {"message": EMAIL_ALREADY_CONFIRMED}
     if user:
         verification_token = auth_service.create_email_token({"sub": user.email})
 
@@ -303,7 +314,7 @@ async def request_email(
             subject=EMAIL_VERIFY_TITLE,
             template_name=EMAIL_VERIFY_TEMPLATE,
         )
-    return {"message": "Check your email for confirmation."}
+    return {"message": CHECK_EMAIL_FOR_CONFIRMATION}
 
 
 @router.post(
@@ -360,14 +371,14 @@ async def password_reset_request(
             subject=RESET_PASSWORD_TITLE,
             template_name=RESET_PASSWORD_TEMPLATE,
         )
-    return {"message": "If this email exists, password reset instructions were sent."}
+    return {"message": RESET_PASSWORD_EMAIL_EXITS}
 
 
 @router.get(
     "/password-reset/verify/{token}",
     response_description="Success",
     dependencies=[Depends(RateLimiter(limiter=auth_reset_password_limiter))],
-    status_code=status.HTTP_204_NO_CONTENT,
+    # status_code=status.HTTP_204_NO_CONTENT,
 )
 async def reset_password(token: str, db: AsyncSession = Depends(get_db)) -> None:
     """Validate a password reset token.
@@ -383,7 +394,9 @@ async def reset_password(token: str, db: AsyncSession = Depends(get_db)) -> None
     """
     await auth_service.validate_password_reset_token(token=token, db=db)
     # return Response(status_code=status.HTTP_204_NO_CONTENT)
-    return {"message": "Succes. You can create a new password.", }
+    return {
+        "message": SUCCESS_TO_CREATE_NEW_PASSWORD,
+    }
 
 
 @router.patch(
@@ -414,7 +427,7 @@ async def password_reset_confirm(
     if updated_user is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid or expired password reset token",
+            detail=INVALID_OR_EXPIRED_PASSWORD_RESET_TOKEN,
         )
 
     token_hash = auth_service.get_token_hash(body.token)

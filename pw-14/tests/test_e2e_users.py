@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 
 from tests.conftest import test_user
 
-PREFIX = "api/user"
+PREFIX = "/api/user"
 
 
 def test_get_me(client, get_token) -> None:
