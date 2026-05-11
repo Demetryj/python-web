@@ -183,7 +183,7 @@ class AuthService:
         """
         return self.create_token(
             payload=payload,
-            token_scope="refresh_token",
+            token_scope=self.refresh_token_name,
             expires_delta=timedelta(
                 days=expires_delta if expires_delta else self.refresh_token_expire_days
             ),
